@@ -50,3 +50,8 @@ SHA: d27e192
 Revert cmd: git checkout d27e192 -- .
 OR: git revert d27e192
 
+MILESTONE 8 - Final polish + README + build
+SHA: 536b3c6
+Revert cmd: git checkout 536b3c6 -- .
+OR: git revert 536b3c6
+

@@ -165,6 +165,9 @@ class NetworkAnalyzer:
             G2.remove_node(top_node)
         after_stats = self._graph_stats(G2)
 
+        # Recompute PageRank after removal (for analysis consistency)
+        _ = self.compute_pagerank(G2)
+
         return {
             "removed_node": top_node,
             "before_stats": before_stats,

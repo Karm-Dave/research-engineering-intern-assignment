@@ -154,6 +154,9 @@ export default function TimeSeriesPanel() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              {topicData.summary && (
+                <div className="rounded-lg bg-slate-800/70 p-4 italic text-slate-300">{topicData.summary}</div>
+              )}
               <div className="rounded-lg bg-slate-800/70 p-4 text-slate-300">
                 <div className="text-sm font-semibold mb-2">Matching titles</div>
                 <ul className="space-y-1 text-xs text-slate-400">

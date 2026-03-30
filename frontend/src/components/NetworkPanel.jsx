@@ -23,9 +23,24 @@ export default function NetworkPanel() {
     setModal(data)
   }
 
+  const graphData = graph ? { nodes: graph.nodes || [], links: graph.edges || [] } : { nodes: [], links: [] }
+
   const topNodes = graph?.nodes
     ? [...graph.nodes].sort((a, b) => b.score - a.score).slice(0, 10)
     : []
+
+  const selectedStats = (() => {
+    if (!selectedNode || !graph) return null
+    const edges = graph.edges || []
+    const linkCount = edges.filter((e) => e.source === selectedNode.id || e.target === selectedNode.id).length
+    const weightSum = edges.reduce((sum, e) => {
+      if (e.source === selectedNode.id || e.target === selectedNode.id) {
+        return sum + (e.weight || 1)
+      }
+      return sum
+    }, 0)
+    return { linkCount, weightSum }
+  })()
 
   return (
     <div className="glass-card rounded-xl p-6">
@@ -48,7 +63,9 @@ export default function NetworkPanel() {
             <div className="h-full flex items-center justify-center text-slate-400">Loading network...</div>
           ) : (
             <ForceGraph2D
-              graphData={graph}
+              graphData={graphData}
+              nodeLabel={(node) => `${node.label}
+Score: ${node.score?.toFixed(4)}`}
               nodeRelSize={4}
               linkDirectionalArrowLength={4}
               nodeColor={(node) => node.color}
@@ -129,6 +146,9 @@ export default function NetworkPanel() {
               <div className="text-xs uppercase text-slate-500">Selected node</div>
               <div className="mt-2 font-semibold">{selectedNode.label}</div>
               <div className="text-xs text-slate-400">Score: {selectedNode.score?.toFixed(4)}</div>
+              {selectedStats && (
+                <div className="text-xs text-slate-400">Links: {selectedStats.linkCount} | Weight: {selectedStats.weightSum}</div>
+              )}
             </div>
           )}
 

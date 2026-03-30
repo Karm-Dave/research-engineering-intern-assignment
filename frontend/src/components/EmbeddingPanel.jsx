@@ -139,7 +139,7 @@ export default function EmbeddingPanel() {
             ))}
           </div>
           <div className="text-xs text-slate-400">
-            View in TensorFlow Projector: export embeddings and metadata (see README).
+            <a className="text-indigo-300 underline" href="https://projector.tensorflow.org/" target="_blank" rel="noreferrer">View in TensorFlow Projector</a> (export embeddings + metadata; see README).
           </div>
         </div>
       </div>
