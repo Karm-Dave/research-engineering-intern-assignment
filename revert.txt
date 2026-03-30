@@ -15,3 +15,8 @@ IMPORTANT: To revert to any milestone safely:
   2. git log --oneline  (find the SHA)
   3. git checkout <SHA>  (detached HEAD, safe to inspect)
   4. git checkout -b recovery-branch <SHA>  (create branch from old state)
+MILESTONE 1 - Project scaffold + requirements + start.sh
+SHA: 20ffc18
+Revert cmd: git checkout 20ffc18 -- .
+OR: git revert 20ffc18
+
