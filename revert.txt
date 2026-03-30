@@ -20,3 +20,8 @@ SHA: 20ffc18
 Revert cmd: git checkout 20ffc18 -- .
 OR: git revert 20ffc18
 
+MILESTONE 2 - data_loader complete + tests passing
+SHA: d116c17
+Revert cmd: git checkout d116c17 -- .
+OR: git revert d116c17
+
