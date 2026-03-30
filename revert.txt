@@ -60,3 +60,8 @@ SHA: a932706
 Revert cmd: git checkout a932706 -- .
 OR: git revert a932706
 
+CHORE - add render deployment config
+SHA: 55d28c1
+Revert cmd: git checkout 55d28c1 -- .
+OR: git revert 55d28c1
+
