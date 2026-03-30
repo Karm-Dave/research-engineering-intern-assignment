@@ -30,3 +30,8 @@ SHA: 7c0910c
 Revert cmd: git checkout 7c0910c -- .
 OR: git revert 7c0910c
 
+MILESTONE 4 - All backend modules complete + tests passing
+SHA: a2fd578
+Revert cmd: git checkout a2fd578 -- .
+OR: git revert a2fd578
+
