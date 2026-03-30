@@ -40,3 +40,8 @@ SHA: 8ee1424
 Revert cmd: git checkout 8ee1424 -- .
 OR: git revert 8ee1424
 
+MILESTONE 6 - React frontend scaffold + components
+SHA: 4d2245d
+Revert cmd: git checkout 4d2245d -- .
+OR: git revert 4d2245d
+

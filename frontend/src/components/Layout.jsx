@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BarChart3, Network, Sparkles, Layers, Search, Home } from 'lucide-react'
+import { onLoadingChange } from '../api/client.js'
 
 const navItems = [
   { to: '/', label: 'Overview', icon: Home },
@@ -11,6 +13,12 @@ const navItems = [
 ]
 
 export default function Layout({ children }) {
+  const [activeRequests, setActiveRequests] = useState(0)
+
+  useEffect(() => {
+    const unsub = onLoadingChange((count) => setActiveRequests(count))
+    return () => unsub()
+  }, [])
   return (
     <div className="min-h-screen flex text-slate-100">
       <aside className="w-64 border-r border-slate-700/60 bg-slate-900/80 backdrop-blur">
@@ -46,6 +54,7 @@ export default function Layout({ children }) {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold">Investigative Reporting Workspace</h1>
           <p className="text-slate-400">Explore diffusion patterns across multiple political communities.</p>
+          <div className="mt-2 text-xs text-slate-500">API status: {activeRequests > 0 ? "syncing" : "idle"}</div>
         </div>
         {children}
       </main>
