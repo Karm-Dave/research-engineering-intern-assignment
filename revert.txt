@@ -25,3 +25,8 @@ SHA: d116c17
 Revert cmd: git checkout d116c17 -- .
 OR: git revert d116c17
 
+MILESTONE 3 - embeddings complete + cache working + tests passing
+SHA: 7c0910c
+Revert cmd: git checkout 7c0910c -- .
+OR: git revert 7c0910c
+

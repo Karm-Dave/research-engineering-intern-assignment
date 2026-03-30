@@ -141,11 +141,14 @@ class DataLoader:
         crosspost_parent_list = data.get("crosspost_parent_list") or []
         is_crosspost = bool(crosspost_parent_list)
         crosspost_subreddit = ""
+        crosspost_author = ""
         if is_crosspost and isinstance(crosspost_parent_list, list):
             try:
                 crosspost_subreddit = crosspost_parent_list[0].get("subreddit") or ""
+                crosspost_author = crosspost_parent_list[0].get("author") or ""
             except Exception:
                 crosspost_subreddit = ""
+                crosspost_author = ""
 
         return {
             "id": data.get("id") or "",
@@ -167,6 +170,7 @@ class DataLoader:
             "link_flair": link_flair,
             "is_crosspost": is_crosspost,
             "crosspost_subreddit": crosspost_subreddit,
+            "crosspost_author": crosspost_author,
         }
 
     def get_posts(self) -> List[Dict[str, Any]]:

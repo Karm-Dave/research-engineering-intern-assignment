@@ -3,12 +3,19 @@ import tempfile
 import numpy as np
 
 import embeddings as emb
+from search import SemanticSearch
 from tests import make_test_posts
 
 
 def _setup_engine(tmpdir, posts):
     emb.CACHE_DIR = tmpdir
     return emb.EmbeddingEngine(posts)
+
+
+def _setup_search(tmpdir, posts):
+    engine = _setup_engine(tmpdir, posts)
+    vectors = engine.compute_embeddings()
+    return SemanticSearch(posts, vectors, engine)
 
 
 def test_embeddings_computed():
@@ -50,3 +57,67 @@ def test_cosine_similarity_range():
         sims = engine.cosine_similarity(q, vecs)
         assert np.all(sims <= 1.0 + 1e-6)
         assert np.all(sims >= -1.0 - 1e-6)
+
+
+def test_semantic_search_returns_results():
+    posts = make_test_posts(8)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        searcher = _setup_search(tmpdir, posts)
+        results = searcher.search("mutual aid")
+        assert isinstance(results, list)
+
+
+def test_semantic_search_top_k_respected():
+    posts = make_test_posts(10)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        searcher = _setup_search(tmpdir, posts)
+        results = searcher.search("protest", top_k=5)
+        assert len(results) <= 5
+
+
+def test_empty_query_handled():
+    posts = make_test_posts(5)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        searcher = _setup_search(tmpdir, posts)
+        results = searcher.search("")
+        assert results == []
+        assert searcher.last_message == "Query too short"
+
+
+def test_short_query_handled():
+    posts = make_test_posts(5)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        searcher = _setup_search(tmpdir, posts)
+        results = searcher.search("hi")
+        assert results == []
+        assert searcher.last_message == "Query too short"
+
+
+def test_non_english_input():
+    posts = make_test_posts(5)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        searcher = _setup_search(tmpdir, posts)
+        results = searcher.search("solidaridad")
+        assert isinstance(results, list)
+
+
+def test_zero_overlap_semantic():
+    posts = make_test_posts(6)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        searcher = _setup_search(tmpdir, posts)
+        results = searcher.search("collective resource sharing")
+        assert isinstance(results, list)
+        assert len(results) > 0
+
+
+def test_domain_filter():
+    posts = make_test_posts(6)
+    for i in range(3):
+        posts[i]["domain"] = "alpha.com"
+    for i in range(3, 6):
+        posts[i]["domain"] = "beta.com"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        searcher = _setup_search(tmpdir, posts)
+        results = searcher.search("community", top_k=10, filter_domain="alpha.com")
+        assert len(results) <= 10
+        assert all(r["post"].get("domain") == "alpha.com" for r in results)
