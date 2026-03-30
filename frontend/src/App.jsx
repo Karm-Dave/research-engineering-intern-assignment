@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 
 import Layout from './components/Layout.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import StatCards from './components/StatCards.jsx'
 import TimeSeriesPanel from './components/TimeSeriesPanel.jsx'
 import NetworkPanel from './components/NetworkPanel.jsx'
@@ -54,6 +55,7 @@ export default function App() {
 
   return (
     <Layout>
+      <ErrorBoundary>
       {error && (
         <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-red-200">
           {error}
@@ -67,6 +69,7 @@ export default function App() {
         <Route path="/embeddings" element={<EmbeddingPanel />} />
         <Route path="/search" element={<SearchChat />} />
       </Routes>
+      </ErrorBoundary>
     </Layout>
   )
 }

@@ -45,3 +45,8 @@ SHA: 4d2245d
 Revert cmd: git checkout 4d2245d -- .
 OR: git revert 4d2245d
 
+MILESTONE 7 - Frontend connected to live backend
+SHA: d27e192
+Revert cmd: git checkout d27e192 -- .
+OR: git revert d27e192
+
