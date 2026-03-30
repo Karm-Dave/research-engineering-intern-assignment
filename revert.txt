@@ -1,0 +1,17 @@
+=== SIMPPL DASHBOARD - COMMIT REVERT GUIDE ===
+Run these commands to revert to a specific milestone.
+
+FORMAT:
+  MILESTONE N - Description
+  SHA: <commit sha>
+  Revert cmd: git checkout <sha> -- .
+  OR: git revert <sha>  (creates new revert commit, safer)
+
+---
+[Entries will be added here as development progresses]
+
+IMPORTANT: To revert to any milestone safely:
+  1. git stash  (if you have uncommitted changes)
+  2. git log --oneline  (find the SHA)
+  3. git checkout <SHA>  (detached HEAD, safe to inspect)
+  4. git checkout -b recovery-branch <SHA>  (create branch from old state)
