@@ -35,3 +35,8 @@ SHA: a2fd578
 Revert cmd: git checkout a2fd578 -- .
 OR: git revert a2fd578
 
+MILESTONE 5 - FastAPI endpoints wired + smoke tests
+SHA: 8ee1424
+Revert cmd: git checkout 8ee1424 -- .
+OR: git revert 8ee1424
+

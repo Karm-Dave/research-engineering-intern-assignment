@@ -190,6 +190,8 @@ class TopicClusterer:
                     "cluster_id": int(labels[i]) if len(labels) > i else 0,
                     "title": post.get("title", ""),
                     "score": post.get("score", 0),
+                    "author": post.get("author", ""),
+                    "is_self": bool(post.get("is_self")),
                 }
             )
         return points
