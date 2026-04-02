@@ -26,7 +26,18 @@ class DataLoader:
         for name in os.listdir(DATA_DIR):
             if name.endswith(".jsonl") or name.endswith(".json"):
                 files.append(os.path.join(DATA_DIR, name))
-        return files
+
+        cleaned_path = os.path.join(DATA_DIR, "cleaned_data.jsonl")
+        if os.path.exists(cleaned_path):
+            files = [
+                path
+                for path in files
+                if os.path.basename(path) != "data.jsonl"
+            ]
+            if cleaned_path not in files:
+                files.append(cleaned_path)
+
+        return sorted(files)
 
     def _cache_is_valid(self) -> bool:
         if not os.path.exists(self._cache_path):

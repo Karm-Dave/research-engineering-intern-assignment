@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { BarChart3, Network, Sparkles, Layers, Search, Home } from 'lucide-react'
 import { onLoadingChange } from '../api/client.js'
 
 const navItems = [
-  { to: '/', label: 'Overview', icon: Home },
-  { to: '/timeseries', label: 'Time Series', icon: BarChart3 },
-  { to: '/network', label: 'Network', icon: Network },
-  { to: '/clusters', label: 'Topic Clusters', icon: Layers },
-  { to: '/embeddings', label: 'Embedding Space', icon: Sparkles },
-  { to: '/search', label: 'Search & Chat', icon: Search }
+  { to: '/', label: 'Overview' },
+  { to: '/timeseries', label: 'Time Series' },
+  { to: '/network', label: 'Network' },
+  { to: '/clusters', label: 'Topic Clusters' },
+  { to: '/embeddings', label: 'Embedding Space' },
+  { to: '/search', label: 'Search & Chat' }
 ]
 
 export default function Layout({ children }) {
@@ -29,7 +28,6 @@ export default function Layout({ children }) {
         </div>
         <nav className="px-3">
           {navItems.map((item) => {
-            const Icon = item.icon
             return (
               <NavLink
                 key={item.to}
@@ -43,7 +41,7 @@ export default function Layout({ children }) {
                   }`
                 }
               >
-                <Icon size={18} />
+                <span className="h-2 w-2 rounded-full bg-slate-500/60" />
                 {item.label}
               </NavLink>
             )

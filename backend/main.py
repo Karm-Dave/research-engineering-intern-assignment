@@ -1,7 +1,11 @@
 import asyncio
 import os
 import time
+import logging
 from typing import Dict, Any
+from concurrent.futures import ThreadPoolExecutor
+
+import numpy as np
 
 from fastapi import FastAPI, Body, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +20,9 @@ from timeseries import TimeSeriesAnalyzer
 from chatbot import DataChatbot
 from config import GROQ_MODEL
 
+
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger("simppl")
 
 app = FastAPI(title="SimPPL Research Dashboard")
 
@@ -34,9 +41,9 @@ async def startup_event():
     posts = loader.get_posts()
 
     engine = EmbeddingEngine(posts)
-    embeddings = engine.get_embeddings()
-    search = SemanticSearch(posts, embeddings, engine)
-    clusterer = TopicClusterer(posts, embeddings)
+    empty_embeddings = np.zeros((0, 384), dtype=np.float32)
+    search = SemanticSearch(posts, empty_embeddings, engine)
+    clusterer = TopicClusterer(posts, empty_embeddings)
     network = NetworkAnalyzer(posts)
     ts = TimeSeriesAnalyzer(posts)
     chatbot = DataChatbot(posts, search)
@@ -52,12 +59,38 @@ async def startup_event():
 
     app.state.cache_timeseries = {"ts": 0, "data": None}
     app.state.cache_clusters: Dict[int, Dict[str, Any]] = {}
+    app.state.embeddings_error = ""
+    logger.info("Loaded %d posts", len(posts))
+    logger.info("Data files: %s", getattr(loader, "_data_files", []))
+    app.state.embeddings_executor = ThreadPoolExecutor(max_workers=1)
+    app.state.embeddings_future = app.state.embeddings_executor.submit(engine.get_embeddings)
+
+def _ensure_embeddings():
+    try:
+        future = getattr(app.state, "embeddings_future", None)
+        if future is not None and not future.done():
+            logger.info("Embeddings are still building")
+            return None, "Embeddings are still building. Please retry in about a minute."
+        if future is not None:
+            embeddings = future.result()
+        else:
+            embeddings = app.state.engine.get_embeddings()
+        app.state.embeddings_error = ""
+        if app.state.search.embeddings is None or len(app.state.search.embeddings) == 0:
+            app.state.search.embeddings = embeddings
+        if app.state.clusterer.embeddings is None or len(app.state.clusterer.embeddings) == 0:
+            app.state.clusterer.embeddings = embeddings
+        return embeddings, None
+    except Exception as exc:
+        app.state.embeddings_error = str(exc)
+        logger.exception("Embeddings failed")
+        return None, str(exc)
 
 
 @app.get("/api/health")
 async def health():
     posts = getattr(app.state, "posts", [])
-    return {"status": "ok", "posts_loaded": len(posts), "model": GROQ_MODEL}
+    return {"status": "ok", "posts_loaded": len(posts), "model": GROQ_MODEL, "embeddings_error": app.state.embeddings_error}
 
 
 @app.get("/api/stats")
@@ -155,6 +188,9 @@ async def network_remove_top_node(type: str = "domain"):
 
 @app.get("/api/clusters")
 async def clusters(n_clusters: int = 8):
+    _, err = _ensure_embeddings()
+    if err:
+        return []
     clusterer = app.state.clusterer
     cache = app.state.cache_clusters
 
@@ -175,6 +211,9 @@ async def clusters(n_clusters: int = 8):
 
 @app.get("/api/embeddings-viz")
 async def embeddings_viz():
+    _, err = _ensure_embeddings()
+    if err:
+        return {"points": [], "clusters": [], "error": err}
     clusterer = app.state.clusterer
     loop = asyncio.get_event_loop()
     points = await loop.run_in_executor(None, clusterer.get_umap_points)
@@ -184,11 +223,21 @@ async def embeddings_viz():
 
 @app.post("/api/search")
 async def search(payload: Dict[str, Any] = Body(...)):
+    _, err = _ensure_embeddings()
     query = payload.get("query", "")
     top_k = int(payload.get("top_k", 10))
     filter_domain = payload.get("filter_domain")
 
     searcher = app.state.search
+    if err:
+        results = searcher.search_lexical(query, top_k=top_k, filter_domain=filter_domain)
+        return {
+            "results": results,
+            "related_queries": [],
+            "count": len(results),
+            "message": f"{err} Using keyword search.",
+        }
+
     results = searcher.search(query, top_k=top_k, filter_domain=filter_domain)
     related = searcher.get_related_queries(query, results) if results else []
 
@@ -202,6 +251,7 @@ async def search(payload: Dict[str, Any] = Body(...)):
 
 @app.post("/api/chat")
 async def chat(payload: Dict[str, Any] = Body(...)):
+    _, err = _ensure_embeddings()
     query = payload.get("query", "")
     history = payload.get("conversation_history", [])
     if not isinstance(query, str):
@@ -210,6 +260,13 @@ async def chat(payload: Dict[str, Any] = Body(...)):
         history = []
 
     bot = app.state.chatbot
+    if err:
+        searcher = app.state.search
+        results = searcher.search_lexical(query, top_k=5)
+        sources = [r.get("post", {}) for r in results]
+        response = bot._fallback_response(results) if results else err
+        return {"response": response, "sources": sources, "related_queries": [], "search_results_count": len(results)}
+
     return bot.chat(query, conversation_history=history)
 
 

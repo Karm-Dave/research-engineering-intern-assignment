@@ -1,5 +1,7 @@
 import json
 import time
+import re
+import logging
 from typing import List, Dict, Any, Optional
 
 import numpy as np
@@ -7,6 +9,9 @@ from groq import Groq
 
 from config import GROQ_API_KEY, GROQ_MODEL
 from embeddings import EmbeddingEngine
+
+
+logger = logging.getLogger("simppl")
 
 
 class SemanticSearch:
@@ -41,6 +46,35 @@ class SemanticSearch:
 
         if not results:
             self.last_message = "No results found"
+        return results
+
+    def search_lexical(self, query: str, top_k: int = 10, filter_domain: Optional[str] = None) -> List[Dict[str, Any]]:
+        self.last_message = ""
+        if not query or len(query.strip()) < 3:
+            self.last_message = "Query too short"
+            return []
+        terms = [t for t in re.split(r"\W+", query.lower().strip()) if t]
+        if not terms:
+            self.last_message = "Query too short"
+            return []
+        scored = []
+        for post in self.posts:
+            if filter_domain and post.get("domain") != filter_domain:
+                continue
+            hay = f"{post.get('title','')} {post.get('text','')}".lower()
+            matches = sum(1 for t in terms if t in hay)
+            if matches == 0:
+                continue
+            score = matches / max(len(terms), 1)
+            scored.append((score, post))
+        if not scored:
+            self.last_message = "No results found"
+            return []
+        scored.sort(key=lambda x: x[0], reverse=True)
+        results = []
+        for rank, (score, post) in enumerate(scored[:top_k], start=1):
+            results.append({"post": post, "score": float(score), "rank": rank})
+        logger.info("Lexical search fallback used for query: %s", query)
         return results
 
     def get_related_queries(self, query: str, results: List[Dict[str, Any]]) -> List[str]:

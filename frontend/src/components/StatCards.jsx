@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react'
-import { FileText, Calendar, MessageSquare, ThumbsUp } from 'lucide-react'
 import { getStats } from '../api/client.js'
 
-const Card = ({ icon: Icon, label, value, accent }) => (
+const Card = ({ label, value, accent, badge }) => (
   <div className="glass-card rounded-xl p-5 flex items-center gap-4">
-    <div className={`rounded-lg p-3 ${accent}`}>
-      <Icon size={20} />
-    </div>
+    <div className={`rounded-lg p-3 ${accent}`}><span className="text-xs font-semibold">{badge}</span></div>
     <div>
       <div className="text-sm text-slate-400">{label}</div>
       <div className="text-2xl font-semibold text-slate-100">{value}</div>
@@ -37,10 +34,10 @@ export default function StatCards() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      <Card icon={FileText} label="Total Posts" value={stats.total_posts} accent="bg-indigo-500/20 text-indigo-200" />
-      <Card icon={Calendar} label="Date Range" value={dateRange} accent="bg-sky-500/20 text-sky-200" />
-      <Card icon={MessageSquare} label="Total Comments" value={stats.total_comments} accent="bg-emerald-500/20 text-emerald-200" />
-      <Card icon={ThumbsUp} label="Average Score" value={stats.avg_score} accent="bg-amber-500/20 text-amber-200" />
+      <Card badge="T" label="Total Posts" value={stats.total_posts} accent="bg-indigo-500/20 text-indigo-200" />
+      <Card badge="D" label="Date Range" value={dateRange} accent="bg-sky-500/20 text-sky-200" />
+      <Card badge="C" label="Total Comments" value={stats.total_comments} accent="bg-emerald-500/20 text-emerald-200" />
+      <Card badge="S" label="Average Score" value={stats.avg_score} accent="bg-amber-500/20 text-amber-200" />
     </div>
   )
 }
