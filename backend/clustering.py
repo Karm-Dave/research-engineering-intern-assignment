@@ -8,29 +8,50 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from groq import Groq
 
 from config import CACHE_DIR, GROQ_API_KEY, GROQ_MODEL
-
+from database import get_collection
 
 COLOR_PALETTE = [
-    "#e6194b",
-    "#3cb44b",
-    "#ffe119",
-    "#4363d8",
-    "#f58231",
-    "#911eb4",
-    "#42d4f4",
-    "#f032e6",
-    "#bfef45",
-    "#fabed4",
+    "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
+    "#911eb4", "#42d4f4", "#f032e6", "#bfef45", "#fabed4",
 ]
 
-
 class TopicClusterer:
-    def __init__(self, posts: List[Dict[str, Any]], embeddings: np.ndarray) -> None:
-        self.posts = posts
-        self.embeddings = embeddings
+    def __init__(self) -> None:
+        self.collection = get_collection()
         self._summary_cache: Dict[str, Dict[str, Any]] = {}
         self._cluster_cache: Dict[int, List[Dict[str, Any]]] = {}
         self._last_labels = None
+        self._last_points = None
+        
+        # In-memory storage for the current cluster run
+        self.posts: List[Dict[str, Any]] = []
+        self.embeddings: np.ndarray = np.array([])
+        self._last_sync = 0
+
+    def sync_data(self):
+        # Only sync if more than 5 minutes passed to avoid spamming DB during multiple cluster requests
+        if time.time() - self._last_sync < 300 and len(self.posts) > 0:
+            return
+            
+        # Fetching top 2000 recent posts with embeddings to limit memory usage
+        cursor = self.collection.find({}, {"_id": 0}).sort("created_utc", -1).limit(2000)
+        
+        self.posts = []
+        embeds = []
+        
+        for doc in cursor:
+            embedding = doc.pop("embedding", None)
+            if embedding and len(embedding) > 0:
+                self.posts.append(doc)
+                embeds.append(embedding)
+                
+        if embeds:
+            self.embeddings = np.array(embeds)
+        else:
+            self.embeddings = np.array([])
+            
+        self._last_sync = time.time()
+        self._cluster_cache = {} # Invalidate memory cache when syncing new data
 
     def _umap_path(self, n_components: int) -> str:
         if n_components == 2:
@@ -43,42 +64,35 @@ class TopicClusterer:
         if self.embeddings is None or len(self.embeddings) == 0:
             return np.zeros((0, n_components))
 
-        cache_path = self._umap_path(n_components)
-        if os.path.exists(cache_path):
-            try:
-                cached = np.load(cache_path)
-                if cached.shape[0] == len(self.embeddings) and cached.shape[1] == n_components:
-                    return cached
-            except Exception:
-                pass
-
+        # We will not cache UMAP to disk in a dynamic system since data shifts every 10 min.
+        # We process in-memory.
         import umap
 
         reducer = umap.UMAP(
             n_components=n_components,
             n_neighbors=n_neighbors,
-            random_state=42,
             min_dist=0.1,
             metric="cosine",
         )
         reduced = reducer.fit_transform(self.embeddings)
-        try:
-            np.save(cache_path, reduced)
-        except Exception:
-            pass
         return reduced
 
     def cluster(self, n_clusters: int = 8) -> np.ndarray:
+        self.sync_data()
+        
         if n_clusters < 2:
             n_clusters = 2
         if n_clusters > 50:
             n_clusters = 50
+            
         if self.embeddings is None or len(self.embeddings) == 0:
             self._last_labels = np.array([])
             return self._last_labels
+            
         if len(self.embeddings) < 2:
             self._last_labels = np.zeros(len(self.embeddings), dtype=int)
             return self._last_labels
+            
         if n_clusters > len(self.embeddings):
             n_clusters = len(self.embeddings)
 
@@ -136,6 +150,8 @@ class TopicClusterer:
         return summary
 
     def get_full_cluster_data(self, n_clusters: int = 8) -> List[Dict[str, Any]]:
+        self.sync_data()
+        
         if n_clusters in self._cluster_cache:
             return self._cluster_cache[n_clusters]
 
@@ -173,9 +189,15 @@ class TopicClusterer:
         return clusters
 
     def get_umap_points(self) -> List[Dict[str, Any]]:
+        self.sync_data()
+        
         if self._last_labels is None:
             self._last_labels = self.cluster(n_clusters=8)
         labels = self._last_labels if self._last_labels is not None else np.array([])
+        
+        if len(self.embeddings) == 0:
+            return []
+            
         coords_2d = self.reduce_dimensions(n_components=2)
 
         points: List[Dict[str, Any]] = []

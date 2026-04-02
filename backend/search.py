@@ -9,73 +9,104 @@ from groq import Groq
 
 from config import GROQ_API_KEY, GROQ_MODEL
 from embeddings import EmbeddingEngine
-
+from database import get_collection
 
 logger = logging.getLogger("simppl")
 
-
 class SemanticSearch:
     def __init__(self, posts: List[Dict[str, Any]], embeddings: np.ndarray, engine: EmbeddingEngine):
-        self.posts = posts
-        self.embeddings = embeddings
         self.engine = engine
         self.last_message = ""
         self._related_cache: Dict[str, Dict[str, Any]] = {}
+        self.collection = get_collection()
 
     def search(self, query: str, top_k: int = 10, filter_domain: Optional[str] = None) -> List[Dict[str, Any]]:
         self.last_message = ""
         if not query or len(query.strip()) < 3:
             self.last_message = "Query too short"
             return []
-        if self.embeddings is None or len(self.embeddings) == 0:
-            self.last_message = "No results found"
+
+        try:
+            query_vec = self.engine.get_embedding_for_query(query)
+        except Exception as e:
+            self.last_message = f"Embeddings engine error: {e}"
             return []
 
-        query_vec = self.engine.get_embedding_for_query(query)
-        scores = self.engine.cosine_similarity(query_vec, self.embeddings)
-        ranked_idx = np.argsort(scores)[::-1]
+        pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "vector_index",
+                    "path": "embedding",
+                    "queryVector": query_vec.tolist(),
+                    "numCandidates": top_k * 10,
+                    "limit": top_k
+                }
+            }
+        ]
 
-        results: List[Dict[str, Any]] = []
-        for rank, idx in enumerate(ranked_idx[: max(top_k * 5, top_k)]):
-            post = self.posts[int(idx)]
-            if filter_domain and post.get("domain") != filter_domain:
-                continue
-            results.append({"post": post, "score": float(scores[int(idx)]), "rank": rank + 1})
-            if len(results) >= top_k:
-                break
+        # Note: In Atlas, $vectorSearch must be the extremely first stage.
+        # Filtering is done inside $vectorSearch if needed, but for simplicity,
+        # we can $match afterwards if dataset is relatively small, or build an exact filter block.
+        # It's better to filter directly in vectorSearch if possible.
+        if filter_domain:
+            pipeline[0]["$vectorSearch"]["filter"] = {"domain": filter_domain}
 
-        if not results:
+        pipeline.append({
+            "$addFields": {
+                "score": {"$meta": "vectorSearchScore"}
+            }
+        })
+        pipeline.append({
+            "$project": {
+                "_id": 0,
+                "embedding": 0
+            }
+        })
+
+        try:
+            results = list(self.collection.aggregate(pipeline))
+        except Exception as e:
+            logger.error(f"Vector search failed (index might not be ready): {e}")
+            self.last_message = "Vector search index missing or loading, falling back to keyword search."
+            return self.search_lexical(query, top_k, filter_domain)
+
+        out = []
+        for rank, r in enumerate(results):
+            score = r.pop("score", 0.0)
+            out.append({"post": r, "score": float(score), "rank": rank + 1})
+
+        if not out:
             self.last_message = "No results found"
-        return results
+        return out
 
     def search_lexical(self, query: str, top_k: int = 10, filter_domain: Optional[str] = None) -> List[Dict[str, Any]]:
         self.last_message = ""
         if not query or len(query.strip()) < 3:
             self.last_message = "Query too short"
             return []
-        terms = [t for t in re.split(r"\W+", query.lower().strip()) if t]
-        if not terms:
-            self.last_message = "Query too short"
-            return []
-        scored = []
-        for post in self.posts:
-            if filter_domain and post.get("domain") != filter_domain:
-                continue
-            hay = f"{post.get('title','')} {post.get('text','')}".lower()
-            matches = sum(1 for t in terms if t in hay)
-            if matches == 0:
-                continue
-            score = matches / max(len(terms), 1)
-            scored.append((score, post))
-        if not scored:
+        
+        match_stage = {}
+        if filter_domain:
+            match_stage["domain"] = filter_domain
+            
+        q = query.lower().strip()
+        match_stage["$or"] = [
+            {"title": {"$regex": q, "$options": "i"}},
+            {"text": {"$regex": q, "$options": "i"}}
+        ]
+        
+        results = list(self.collection.find(match_stage, {"_id": 0, "embedding": 0}).limit(top_k))
+        
+        if not results:
             self.last_message = "No results found"
             return []
-        scored.sort(key=lambda x: x[0], reverse=True)
-        results = []
-        for rank, (score, post) in enumerate(scored[:top_k], start=1):
-            results.append({"post": post, "score": float(score), "rank": rank})
+            
+        out = []
+        for rank, r in enumerate(results):
+            out.append({"post": r, "score": 1.0, "rank": rank + 1})
+        
         logger.info("Lexical search fallback used for query: %s", query)
-        return results
+        return out
 
     def get_related_queries(self, query: str, results: List[Dict[str, Any]]) -> List[str]:
         if not query:

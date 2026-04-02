@@ -65,3 +65,8 @@ SHA: 55d28c1
 Revert cmd: git checkout 55d28c1 -- .
 OR: git revert 55d28c1
 
+
+FIX - MiniLM embeddings, chatbot fallback, logging, Windows start
+SHA: f3d5138
+Revert cmd: git checkout f3d5138 -- .
+OR: git revert f3d5138
