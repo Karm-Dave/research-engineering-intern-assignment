@@ -2,21 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: dark;
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #09090b;
+    --card: #ffffff;
+    --card-foreground: #09090b;
+    --border: #e2e8f0;
+    --primary: #2563eb;
+    --primary-foreground: #f8fafc;
+  }
+
+  .dark {
+    --background: #09090b;
+    --foreground: #f8fafc;
+    --card: #1e293b;
+    --card-foreground: #f8fafc;
+    --border: #334155;
+    --primary: #3b82f6;
+    --primary-foreground: #09090b;
+  }
+
+  body {
+    @apply bg-background text-foreground tracking-tight transition-colors duration-300;
+  }
 }
 
-body {
-  font-family: 'Space Grotesk', sans-serif;
-  background: radial-gradient(1200px 800px at 10% 10%, rgba(99, 102, 241, 0.12), transparent 60%),
-    radial-gradient(900px 700px at 90% 20%, rgba(56, 189, 248, 0.08), transparent 55%),
-    #0f172a;
-}
-
-.glass-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
-  border: 1px solid rgba(51, 65, 85, 0.7);
-  box-shadow: 0 10px 40px rgba(2, 6, 23, 0.5);
+@layer components {
+  .glass-card {
+    @apply bg-card border border-border shadow-sm rounded-xl overflow-hidden transition-all;
+  }
+  
+  .glass-card:hover {
+    @apply shadow-premium-hover;
+  }
 }
 
 .scrollbar-hide::-webkit-scrollbar {

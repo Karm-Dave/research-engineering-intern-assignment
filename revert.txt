@@ -70,3 +70,7 @@ FIX - MiniLM embeddings, chatbot fallback, logging, Windows start
 SHA: f3d5138
 Revert cmd: git checkout f3d5138 -- .
 OR: git revert f3d5138
+
+
+FIX - Chatbot fixed, DB installed
+SHA: 4dc00bd
