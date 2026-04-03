@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { onLoadingChange } from '../api/client.js'
 import { 
   LayoutDashboard, 
@@ -26,17 +26,28 @@ const navItems = [
 
 export default function Layout({ children, toggleTheme, isDark }) {
   const [activeRequests, setActiveRequests] = useState(0)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const unsub = onLoadingChange((count) => setActiveRequests(count))
     return () => unsub()
   }, [])
 
+  const handleSearchClick = (e) => {
+    e.preventDefault()
+    const formData = new FormData(e.target)
+    const q = formData.get('q')
+    if (q && q.trim()) {
+      navigate('/search', { state: { query: q.trim() } })
+      e.target.reset()
+    }
+  }
+
   return (
     <div className="min-h-screen flex text-foreground bg-background transition-colors duration-300 font-sans">
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col transition-colors duration-300 z-10">
-        <div className="px-6 py-6 border-b border-border/50">
+        <div className="px-6 h-16 shrink-0 flex items-center border-b border-border/50">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-premium">
               <Layers className="w-5 h-5 text-white" />
@@ -93,14 +104,15 @@ export default function Layout({ children, toggleTheme, isDark }) {
         {/* Top Navbar */}
         <header className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0 transition-colors duration-300">
           <div className="flex-1 flex items-center">
-            <div className="relative w-96 hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
+            <form onSubmit={handleSearchClick} className="relative w-96 hidden md:block group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 group-focus-within:text-primary transition-colors" />
               <input 
+                name="q"
                 type="text" 
                 placeholder="Search across the workspace..." 
-                className="w-full bg-foreground/5 border border-border rounded-lg pl-9 pr-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-foreground/40"
+                className="w-full bg-background border border-border/80 rounded-lg pl-9 pr-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-foreground/40 tracking-tight shadow-sm"
               />
-            </div>
+            </form>
           </div>
           
           <div className="flex items-center gap-4">

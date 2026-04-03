@@ -12,12 +12,12 @@ export default function ClusterPanel() {
 
   const fetchClusters = async () => {
     let n = nClusters
-    if (n < 2) {
-      n = 2
-      setMessage('Adjusting to valid range')
-    } else if (n > 50) {
-      n = 50
-      setMessage('Adjusting to valid range')
+    if (n < 4) {
+      n = 4
+      setMessage('Adjusting to valid range (Min 4)')
+    } else if (n > 10) {
+      n = 10
+      setMessage('Adjusting to valid range (Max 10)')
     } else {
       setMessage('')
     }
@@ -55,8 +55,8 @@ export default function ClusterPanel() {
           <div className="flex flex-1 items-center gap-4 sm:ml-4 sm:pl-4 sm:border-l sm:border-border/50">
             <input
               type="range"
-              min="2"
-              max="20"
+              min="4"
+              max="10"
               value={nClusters}
               onChange={(e) => setNClusters(Number(e.target.value))}
               className="w-32 accent-primary bg-foreground/10 rounded-lg appearance-none h-1.5 cursor-pointer outline-none"

@@ -1,9 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 import { chat, search, getDomains } from '../api/client.js'
 import { Search, Send, Sparkles, Database, Calendar as CalendarIcon, Filter, ExternalLink } from 'lucide-react'
 
 const sorters = {
-  relevance: (a, b) => b.score - a.score,
+  relevance: (a, b) => {
+    const aHasText = (a.post?.text || '').trim().length > 0;
+    const bHasText = (b.post?.text || '').trim().length > 0;
+    if (aHasText && !bHasText) return -1;
+    if (!aHasText && bHasText) return 1;
+    return b.score - a.score;
+  },
   score: (a, b) => (b.post?.score || 0) - (a.post?.score || 0),
   date: (a, b) => (b.post?.created_utc || 0) - (a.post?.created_utc || 0)
 }
@@ -20,10 +28,34 @@ export default function SearchChat() {
   const [sortBy, setSortBy] = useState('relevance')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  
+  const messagesEndRef = useRef(null)
+  const location = useLocation()
+  const navigate = useNavigate()
+  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, loading])
 
   useEffect(() => {
     getDomains().then((data) => setDomains(data || [])).catch(() => setDomains([]))
   }, [])
+  
+  // Handle cross-workspace search incoming from Layout.jsx
+  useEffect(() => {
+    if (location.state?.query) {
+      const q = location.state.query
+      setInput(q)
+      // Clear state so it doesn't infinite loop on refresh
+      navigate('.', { replace: true, state: {} })
+      // Auto trigger the search logic
+      triggerSearch(q)
+    }
+  }, [location.state])
 
   const filteredResults = useMemo(() => {
     let list = [...results]
@@ -39,46 +71,57 @@ export default function SearchChat() {
     return list.sort(sorters[sortBy])
   }, [results, domainFilter, dateFrom, dateTo, sortBy])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const query = input.trim()
-    if (!query) {
-      setMessage('Please enter a query')
-      return
-    }
-    if (query.length < 3) {
+  const triggerSearch = async (queryText) => {
+    if (!queryText) return
+    if (queryText.length < 3) {
       setMessage('Query too short')
       return
     }
 
     setLoading(true)
     setMessage('')
-    setInput('') // Clear input eagerly for better UX
+    setInput('') // Clear input eagerly
 
-    const userMsg = { role: 'user', content: query, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-    setMessages((prev) => [...prev, userMsg])
+    const userMsg = { role: 'user', content: queryText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    
+    // We get the current messages explicitly instead of using setState callback to have it right now for the API call
+    let currentHistory = []
+    setMessages((prev) => {
+      currentHistory = [...prev, userMsg]
+      return currentHistory
+    })
 
-    const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }))
+    const history = currentHistory.map((m) => ({ role: m.role, content: m.content }))
 
-    const [searchRes, chatRes] = await Promise.all([
-      search(query, 10, domainFilter || null),
-      chat(query, history)
-    ])
+    try {
+      const [searchRes, chatRes] = await Promise.all([
+        search(queryText, 100, domainFilter || null),
+        chat(queryText, history)
+      ])
 
-    setResults(searchRes.results || [])
-    setRelated(searchRes.related_queries || [])
-    if (searchRes.message) {
-      setMessage(searchRes.message)
+      setResults(searchRes.results || [])
+      setRelated(searchRes.related_queries || [])
+      if (searchRes.message) {
+        setMessage(searchRes.message)
+      }
+
+      const botMsg = {
+        role: 'assistant',
+        content: chatRes.response,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sources: chatRes.sources?.length || 0
+      }
+      setMessages((prev) => [...prev, botMsg])
+    } catch (err) {
+      setMessage("Error searching database.")
+    } finally {
+      setLoading(false)
     }
+  }
 
-    const botMsg = {
-      role: 'assistant',
-      content: chatRes.response,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      sources: chatRes.sources?.length || 0
-    }
-    setMessages((prev) => [...prev, botMsg])
-    setLoading(false)
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    triggerSearch(input.trim())
   }
 
   const handleRelatedClick = (q) => {
@@ -123,7 +166,14 @@ export default function SearchChat() {
                       : 'bg-foreground/[0.03] border border-border/50 text-foreground shadow-sm rounded-tl-sm'
                   } ${msg.role === 'user' ? 'rounded-tr-sm' : ''}`}
                 >
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  <ReactMarkdown 
+                    className="space-y-3 font-medium"
+                    components={{
+                      a: ({node, ...props}) => <a target="_blank" rel="noreferrer" className="text-primary hover:underline" {...props} />
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
                   
                   <div className={`mt-3 flex items-center gap-3 text-xs font-mono font-medium ${msg.role === 'user' ? 'text-background/50' : 'text-foreground/40'}`}>
                     <span>{msg.timestamp}</span>
@@ -150,6 +200,7 @@ export default function SearchChat() {
                </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         <div className="p-4 border-t border-border shrink-0 bg-background">
