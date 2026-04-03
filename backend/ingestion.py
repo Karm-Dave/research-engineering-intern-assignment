@@ -7,9 +7,11 @@ from typing import Dict, Any, List
 
 import requests
 from fastembed import TextEmbedding
+from pinecone import Pinecone
 
-from config import SUBREDDITS, EMBED_MODEL
-from database import get_collection
+from config import SUBREDDITS, EMBED_MODEL, PINECONE_API_KEY, PINECONE_INDEX_NAME
+from database import get_collection, get_pinecone_index
+from clustering import TopicClusterer
 
 logger = logging.getLogger("simppl_ingestion")
 
@@ -28,7 +30,7 @@ def clean_text(text: str) -> str:
     cleaned = re.sub(r"<[^>]+>", " ", cleaned)
     cleaned = cleaned.replace("\n", " ")
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    return cleaned[:2000]
+    return cleaned
 
 def normalize_post(data: Dict[str, Any]) -> Dict[str, Any]:
     title = (data.get("title") or "").strip()[:500]
@@ -89,6 +91,33 @@ def normalize_post(data: Dict[str, Any]) -> Dict[str, Any]:
         "crosspost_author": crosspost_author,
     }
 
+def process_and_insert_post_hierarchically(normalized: Dict[str, Any], post_id: str, collection, model, index):
+    vectors_to_upsert = []
+    
+    # Title Vector
+    if normalized.get("title"):
+        t_embed = list(model.embed([normalized["title"]]))[0].tolist()
+        vectors_to_upsert.append({
+            "id": f"{post_id}-title",
+            "values": t_embed,
+            "metadata": {"post_id": post_id, "type": "title", "domain": normalized["domain"], "score": normalized["score"]}
+        })
+        
+    # Content Vector
+    text_content = (normalized.get("text") or "").strip()
+    if text_content:
+        c_embed = list(model.embed([text_content]))[0].tolist()
+        vectors_to_upsert.append({
+            "id": f"{post_id}-content",
+            "values": c_embed,
+            "metadata": {"post_id": post_id, "type": "content", "domain": normalized["domain"], "score": normalized["score"]}
+        })
+        
+    if vectors_to_upsert:
+        index.upsert(vectors=vectors_to_upsert)
+        
+    collection.insert_one(normalized)
+
 def fetch_new_reddit_posts():
     logger.info("Starting scheduled ingestion of Reddit posts...")
     collection = get_collection()
@@ -126,15 +155,10 @@ def fetch_new_reddit_posts():
                 
                 normalized = normalize_post(post_data)
                 
-                # Compute embedding
-                text_to_embed = f"{normalized['title']} {normalized['text'][:500]}".strip()
                 model = get_embedding_model()
-                embed_list = list(model.embed([text_to_embed]))[0].tolist()
+                index = get_pinecone_index()
                 
-                normalized["embedding"] = embed_list
-                
-                # Insert
-                collection.insert_one(normalized)
+                process_and_insert_post_hierarchically(normalized, post_id, collection, model, index)
                 new_posts_inserted += 1
 
             time.sleep(1) # Be nice to Reddit API
@@ -143,12 +167,19 @@ def fetch_new_reddit_posts():
             logger.error(f"Error fetching from r/{subreddit}: {e}")
 
     logger.info(f"Ingestion complete. Inserted {new_posts_inserted} new posts.")
+    
+    try:
+        logger.info("Triggering structural background pre-computations...")
+        TopicClusterer().precompute_all_clusters()
+        logger.info("Pre-computation of KMeans structural boundaries finalized.")
+    except Exception as e:
+        logger.error(f"Failed to background pre-compute clusters: {e}")
 
 def start_scheduler():
     from apscheduler.schedulers.background import BackgroundScheduler
     import datetime
     scheduler = BackgroundScheduler()
-    # next_run_time dictates that it runs immediately on startup, then every 10 mins
-    scheduler.add_job(fetch_new_reddit_posts, "interval", minutes=10, next_run_time=datetime.datetime.now())
+    # next_run_time dictates that it runs immediately on startup, then every 1 hour
+    scheduler.add_job(fetch_new_reddit_posts, "interval", hours=1, next_run_time=datetime.datetime.now())
     scheduler.start()
-    logger.info("Background ingestion scheduler started (every 10 minutes).")
+    logger.info("Background ingestion scheduler started (every 1 hour).")

@@ -3,9 +3,10 @@ import time
 from typing import List, Dict, Any
 
 import numpy as np
+import asyncio
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
-from groq import Groq
+from groq import Groq, AsyncGroq
 
 from config import CACHE_DIR, GROQ_API_KEY, GROQ_MODEL
 from database import get_collection
@@ -34,16 +35,43 @@ class TopicClusterer:
             return
             
         # Fetching top 2000 recent posts with embeddings to limit memory usage
-        cursor = self.collection.find({}, {"_id": 0}).sort("created_utc", -1).limit(2000)
+        cursor = list(self.collection.find({}, {"_id": 0}).sort("created_utc", -1))
         
         self.posts = []
         embeds = []
         
+        if not cursor:
+            self.embeddings = np.array([])
+            return
+
+        from database import get_pinecone_index
+        index = get_pinecone_index()
+        
+        fetch_ids = [f"{doc['id']}-content" for doc in cursor] + [f"{doc['id']}-title" for doc in cursor]
+        
+        vector_results = {}
+        for i in range(0, len(fetch_ids), 500):
+            batch = fetch_ids[i:i+500]
+            try:
+                resp = index.fetch(ids=batch)
+                vector_results.update(resp.get("vectors", {}))
+            except Exception as e:
+                print(f"Error fetching Pinecone vectors: {e}")
+        
         for doc in cursor:
-            embedding = doc.pop("embedding", None)
-            if embedding and len(embedding) > 0:
-                self.posts.append(doc)
-                embeds.append(embedding)
+            pid = doc["id"]
+            v_dict = vector_results.get(f"{pid}-content")
+            if not v_dict:
+                v_dict = vector_results.get(f"{pid}-title")
+                
+            if v_dict:
+                vals = getattr(v_dict, "values", None)
+                if vals is None and hasattr(v_dict, "get"):
+                    vals = v_dict.get("values", None)
+                    
+                if vals:
+                    self.posts.append(doc)
+                    embeds.append(vals)
                 
         if embeds:
             self.embeddings = np.array(embeds)
@@ -51,7 +79,7 @@ class TopicClusterer:
             self.embeddings = np.array([])
             
         self._last_sync = time.time()
-        self._cluster_cache = {} # Invalidate memory cache when syncing new data
+        self._cluster_cache = {}
 
     def _umap_path(self, n_components: int) -> str:
         if n_components == 2:
@@ -80,10 +108,10 @@ class TopicClusterer:
     def cluster(self, n_clusters: int = 8) -> np.ndarray:
         self.sync_data()
         
-        if n_clusters < 2:
-            n_clusters = 2
-        if n_clusters > 50:
-            n_clusters = 50
+        if n_clusters < 4:
+            n_clusters = 4
+        if n_clusters > 10:
+            n_clusters = 10
             
         if self.embeddings is None or len(self.embeddings) == 0:
             self._last_labels = np.array([])
@@ -122,90 +150,48 @@ class TopicClusterer:
             cluster_keywords[int(cluster_id)] = terms[top_idx].tolist()
         return cluster_keywords
 
-    def get_cluster_summary(self, cluster_id: int, posts_in_cluster: List[Dict[str, Any]]) -> str:
-        cache_key = f"{cluster_id}:{len(posts_in_cluster)}"
-        cached = self._summary_cache.get(cache_key)
-        if cached and (time.time() - cached["ts"]) < 3600:
-            return cached["data"]
-
-        titles = [p.get("title", "") for p in posts_in_cluster[:10]]
-        prompt = (
-            "Summarize in 2 sentences what these Reddit posts from multiple political subreddits are about: "
-            f"{titles}. Be specific and factual."
-        )
-
-        try:
-            client = Groq(api_key=GROQ_API_KEY)
-            response = client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=200,
-                temperature=0.3,
-            )
-            summary = response.choices[0].message.content.strip()
-        except Exception as e:
-            summary = f"[Summary unavailable: {str(e)[:50]}]"
-
-        self._summary_cache[cache_key] = {"ts": time.time(), "data": summary}
-        return summary
-
-    def get_full_cluster_data(self, n_clusters: int = 8) -> List[Dict[str, Any]]:
+    def precompute_all_clusters(self):
+        import logging
+        log = logging.getLogger("simppl_clusterer")
+        log.info("Beginning precomputation loops from N=4 to N=10")
         self.sync_data()
+        if len(self.embeddings) == 0:
+            return
+            
+        from database import get_db
+        db = get_db()
+        coll = db["precomputed_clusters"]
         
-        if n_clusters in self._cluster_cache:
-            return self._cluster_cache[n_clusters]
-
-        labels = self.cluster(n_clusters=n_clusters)
-        if len(labels) == 0:
-            return []
-
-        coords_2d = self.reduce_dimensions(n_components=2)
-        keywords = self.get_cluster_keywords(labels)
-
-        clusters: List[Dict[str, Any]] = []
-        for cluster_id in np.unique(labels):
-            idx = np.where(labels == cluster_id)[0]
-            cluster_posts = [self.posts[i] for i in idx]
-            top_posts = sorted(cluster_posts, key=lambda p: p.get("score", 0), reverse=True)[:5]
-            centroid_x = float(np.mean(coords_2d[idx, 0]))
-            centroid_y = float(np.mean(coords_2d[idx, 1]))
-            color = COLOR_PALETTE[int(cluster_id) % len(COLOR_PALETTE)]
-            summary = self.get_cluster_summary(int(cluster_id), cluster_posts)
-
-            clusters.append(
-                {
+        for n in range(4, 11):
+            log.info(f"Precomputing configuration N={n}")
+            labels = self.cluster(n_clusters=n)
+            coords_2d = self.reduce_dimensions(n_components=2)
+            keywords = self.get_cluster_keywords(labels)
+            
+            clusters: List[Dict[str, Any]] = []
+            for cluster_id in np.unique(labels):
+                idx = np.where(labels == cluster_id)[0]
+                cluster_posts = [self.posts[i] for i in idx]
+                top_posts = sorted(cluster_posts, key=lambda p: p.get("score", 0), reverse=True)[:5]
+                centroid_x = float(np.mean(coords_2d[idx, 0]))
+                centroid_y = float(np.mean(coords_2d[idx, 1]))
+                color = COLOR_PALETTE[int(cluster_id) % len(COLOR_PALETTE)]
+                
+                clusters.append({
                     "cluster_id": int(cluster_id),
                     "size": len(cluster_posts),
                     "keywords": keywords.get(int(cluster_id), []),
-                    "summary": summary,
                     "posts": top_posts,
                     "centroid_x": centroid_x,
                     "centroid_y": centroid_y,
                     "color": color,
-                }
-            )
-
-        self._cluster_cache[n_clusters] = clusters
-        return clusters
-
-    def get_umap_points(self) -> List[Dict[str, Any]]:
-        self.sync_data()
-        
-        if self._last_labels is None:
-            self._last_labels = self.cluster(n_clusters=8)
-        labels = self._last_labels if self._last_labels is not None else np.array([])
-        
-        if len(self.embeddings) == 0:
-            return []
+                    "_titles_for_summary": [p.get("title", "") for p in cluster_posts[:10]]
+                })
             
-        coords_2d = self.reduce_dimensions(n_components=2)
-
-        points: List[Dict[str, Any]] = []
-        for i, post in enumerate(self.posts):
-            if i >= len(coords_2d):
-                continue
-            points.append(
-                {
+            points = []
+            for i, post in enumerate(self.posts):
+                if i >= len(coords_2d): continue
+                points.append({
                     "id": post.get("id", ""),
                     "x": float(coords_2d[i, 0]),
                     "y": float(coords_2d[i, 1]),
@@ -214,6 +200,41 @@ class TopicClusterer:
                     "score": post.get("score", 0),
                     "author": post.get("author", ""),
                     "is_self": bool(post.get("is_self")),
-                }
-            )
-        return points
+                })
+
+            struct_payload = {"n_clusters": n, "clusters": clusters, "points": points, "timestamp": time.time()}
+            coll.update_one({"n_clusters": n}, {"$set": struct_payload}, upsert=True)
+            
+        log.info("Precomputations flawless. Stored arrays to MongoDB.")
+
+async def _fetch_summary_async(client, c_id, titles):
+    prompt = (
+        "Summarize in just 2 snappy sentences what these Reddit posts discuss: "
+        f"{titles}. Connect the topics organically. No generic filler."
+    )
+    try:
+        response = await client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=200,
+            temperature=0.4,
+        )
+        return c_id, response.choices[0].message.content.strip()
+    except Exception as e:
+        return c_id, f"[Summary unavailable: {str(e)[:50]}]"
+
+async def generate_dynamic_summaries(structured_data: Dict[str, Any]) -> Dict[str, Any]:
+    client = AsyncGroq(api_key=GROQ_API_KEY)
+    
+    tasks = []
+    for c in structured_data.get("clusters", []):
+        titles = c.pop("_titles_for_summary", [])
+        tasks.append(_fetch_summary_async(client, c["cluster_id"], titles))
+        
+    results = await asyncio.gather(*tasks)
+    
+    summary_map = dict(results)
+    for c in structured_data.get("clusters", []):
+        c["summary"] = summary_map.get(c["cluster_id"], "No summary generated")
+        
+    return structured_data

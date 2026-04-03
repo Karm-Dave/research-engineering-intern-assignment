@@ -4,8 +4,8 @@ import os
 from typing import Dict, Any
 
 from config import DATA_DIR
-from database import get_collection, init_db
-from ingestion import normalize_post, get_embedding_model
+from database import get_collection, init_db, get_pinecone_index
+from ingestion import normalize_post, get_embedding_model, process_and_insert_post_hierarchically
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("bootstrap")
@@ -46,10 +46,8 @@ def bootstrap():
             
         try:
             normalized = normalize_post(data)
-            text_to_embed = f"{normalized['title']} {normalized['text'][:500]}".strip()
-            embed_list = list(model.embed([text_to_embed]))[0].tolist()
-            normalized["embedding"] = embed_list
-            collection.insert_one(normalized)
+            index = get_pinecone_index()
+            process_and_insert_post_hierarchically(normalized, post_id, collection, model, index)
             inserted += 1
             if inserted % 50 == 0:
                 logger.info(f"Inserted {inserted} posts...")

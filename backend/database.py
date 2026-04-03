@@ -10,6 +10,17 @@ from config import MONGODB_URI, MONGO_DB_NAME, MONGO_COLLECTION_NAME
 logger = logging.getLogger("simppl")
 
 _client = None
+_pinecone = None
+_pinecone_index = None
+
+def get_pinecone_index():
+    global _pinecone, _pinecone_index
+    if _pinecone_index is None:
+        from pinecone import Pinecone
+        from config import PINECONE_API_KEY, PINECONE_INDEX_NAME
+        _pinecone = Pinecone(api_key=PINECONE_API_KEY)
+        _pinecone_index = _pinecone.Index(PINECONE_INDEX_NAME)
+    return _pinecone_index
 
 def get_db():
     global _client

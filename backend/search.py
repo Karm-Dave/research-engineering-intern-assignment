@@ -32,49 +32,54 @@ class SemanticSearch:
             self.last_message = f"Embeddings engine error: {e}"
             return []
 
-        pipeline = [
-            {
-                "$vectorSearch": {
-                    "index": "vector_index",
-                    "path": "embedding",
-                    "queryVector": query_vec.tolist(),
-                    "numCandidates": top_k * 10,
-                    "limit": top_k
-                }
-            }
-        ]
-
-        # Note: In Atlas, $vectorSearch must be the extremely first stage.
-        # Filtering is done inside $vectorSearch if needed, but for simplicity,
-        # we can $match afterwards if dataset is relatively small, or build an exact filter block.
-        # It's better to filter directly in vectorSearch if possible.
-        if filter_domain:
-            pipeline[0]["$vectorSearch"]["filter"] = {"domain": filter_domain}
-
-        pipeline.append({
-            "$addFields": {
-                "score": {"$meta": "vectorSearchScore"}
-            }
-        })
-        pipeline.append({
-            "$project": {
-                "_id": 0,
-                "embedding": 0
-            }
-        })
-
         try:
-            results = list(self.collection.aggregate(pipeline))
+            query_vec = self.engine.get_embedding_for_query(query).tolist()
+            from database import get_pinecone_index
+            index = get_pinecone_index()
+            
+            pinecone_filter = {}
+            if filter_domain:
+                pinecone_filter["domain"] = filter_domain
+                
+            res = index.query(
+                vector=query_vec,
+                top_k=top_k * 2, # Increase to account for title/content dual duplicates
+                include_metadata=False,
+                filter=pinecone_filter if pinecone_filter else None
+            )
         except Exception as e:
-            logger.error(f"Vector search failed (index might not be ready): {e}")
+            logger.error(f"Vector search failed: {e}")
             self.last_message = "Vector search index missing or loading, falling back to keyword search."
             return self.search_lexical(query, top_k, filter_domain)
 
+        # Map to original post IDs and deduct duplicates (keep highest score)
+        best_scores = {}
+        for match in res.get("matches", []):
+            post_id = match["id"].rsplit("-", 1)[0]
+            score = match.get("score", 0.0)
+            if post_id not in best_scores or score > best_scores[post_id]:
+                best_scores[post_id] = score
+                
+        # Sort by score descending
+        sorted_ids = sorted(best_scores.keys(), key=lambda x: best_scores[x], reverse=True)[:top_k]
+        
+        if not sorted_ids:
+            self.last_message = "No results found"
+            return []
+            
+        # MongoDB Hydration
+        mongo_docs = list(self.collection.find({"id": {"$in": sorted_ids}}, {"_id": 0}))
+        doc_map = {d["id"]: d for d in mongo_docs}
+        
         out = []
-        for rank, r in enumerate(results):
-            score = r.pop("score", 0.0)
-            out.append({"post": r, "score": float(score), "rank": rank + 1})
-
+        for rank, pid in enumerate(sorted_ids):
+            if pid in doc_map:
+                out.append({
+                    "post": doc_map[pid],
+                    "score": float(best_scores[pid]),
+                    "rank": rank + 1
+                })
+        
         if not out:
             self.last_message = "No results found"
         return out

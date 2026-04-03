@@ -183,33 +183,48 @@ async def clusters(n_clusters: int = 8):
     _, err = _ensure_embeddings()
     if err:
         return []
-    clusterer = app.state.clusterer
-    cache = app.state.cache_clusters
 
-    n = n_clusters
-    if n < 2:
-        n = 2
-    if n > 50:
-        n = 50
+    n = max(4, min(n_clusters, 10))
 
-    if n in cache and (time.time() - cache[n]["ts"]) < 3600:
-        return cache[n]["data"]
+    from database import get_db
+    db = get_db()
+    coll = db["precomputed_clusters"]
+    
+    struct_data = coll.find_one({"n_clusters": n}, {"_id": 0})
+    if not struct_data:
+        # Fallback trigger if background pre-computation hasn't run yet
+        clusterer = app.state.clusterer
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, lambda: clusterer.precompute_all_clusters())
+        struct_data = coll.find_one({"n_clusters": n}, {"_id": 0})
+        
+    if not struct_data:
+        return []
 
-    loop = asyncio.get_event_loop()
-    data = await loop.run_in_executor(None, lambda: clusterer.get_full_cluster_data(n_clusters=n))
-    cache[n] = {"ts": time.time(), "data": data}
-    return data
+    # Generate the LLM stories actively and concurrently 
+    from clustering import generate_dynamic_summaries
+    final_data = await generate_dynamic_summaries(struct_data)
+    
+    return final_data.get("clusters", [])
 
 @app.get("/api/embeddings-viz")
 async def embeddings_viz():
     _, err = _ensure_embeddings()
     if err:
         return {"points": [], "clusters": [], "error": err}
-    clusterer = app.state.clusterer
-    loop = asyncio.get_event_loop()
-    points = await loop.run_in_executor(None, clusterer.get_umap_points)
-    clusters = await loop.run_in_executor(None, lambda: clusterer.get_full_cluster_data(n_clusters=8))
-    return {"points": points, "clusters": clusters}
+        
+    from database import get_db
+    db = get_db()
+    coll = db["precomputed_clusters"]
+    
+    struct_data = coll.find_one({"n_clusters": 8}, {"_id": 0})
+    if not struct_data:
+        return {"points": [], "clusters": []}
+        
+    from clustering import generate_dynamic_summaries
+    final_data = await generate_dynamic_summaries(struct_data)
+    
+    return {"points": final_data.get("points", []), "clusters": final_data.get("clusters", [])}
 
 @app.post("/api/search")
 async def search(payload: Dict[str, Any] = Body(...)):
