@@ -35,10 +35,50 @@ export default function TimeSeriesPanel() {
     return <div className="bg-card border border-border rounded-xl p-6 shadow-sm animate-pulse h-96" />
   }
 
+  const stripGapRows = (rows, key) =>
+    (rows || []).filter((row) => {
+      if (!row || row.gap) return false
+      const val = row[key]
+      return !(typeof val === 'string' && val.startsWith('gap-'))
+    })
+
+  const GAP_START = '2025-02-18'
+  const GAP_END = '2026-04-02'
+  const isInGap = (dateStr) => dateStr && dateStr >= GAP_START && dateStr <= GAP_END
+
+  const weekToDate = (weekStr) => {
+    if (!weekStr || typeof weekStr !== 'string' || !weekStr.includes('-W')) return null
+    const [y, w] = weekStr.split('-W')
+    const year = Number(y)
+    const week = Number(w)
+    if (!year || !week) return null
+    const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7))
+    const dow = simple.getUTCDay()
+    const diff = dow <= 4 ? 1 - dow : 8 - dow
+    const weekStart = new Date(simple)
+    weekStart.setUTCDate(simple.getUTCDate() + diff)
+    return weekStart.toISOString().slice(0, 10)
+  }
+
+  const dailyData = stripGapRows(data.posts_per_day, 'date').filter((d) => !isInGap(d.date))
+  const weeklyData = stripGapRows(data.posts_per_week, 'week').filter((d) => {
+    const weekLabel = d.week ?? d.date
+    const weekStart = weekToDate(weekLabel)
+    if (!weekStart) return true
+    return !isInGap(weekStart)
+  })
+  const scoreData = stripGapRows(data.score_trend, 'date').filter((d) => !isInGap(d.date))
+  const topicSeries = topicData
+    ? stripGapRows(topicData.data, 'date').filter((d) => !isInGap(d.date))
+    : null
+
   const volumeData =
     granularity === 'week'
-      ? data.posts_per_week.map((d) => ({ date: d.week, count: d.count }))
-      : data.posts_per_day
+      ? weeklyData.map((d) => ({
+          date: d.week ?? d.date,
+          count: d.count ?? null
+        }))
+      : dailyData
 
   const tooltipStyle = {
     backgroundColor: 'var(--card)',
@@ -48,6 +88,7 @@ export default function TimeSeriesPanel() {
     boxShadow: 'var(--tw-shadow)',
     fontSize: '0.875rem'
   }
+
 
   return (
     <div className="bg-card border border-border rounded-xl p-6 shadow-sm transition-shadow">
@@ -123,7 +164,7 @@ export default function TimeSeriesPanel() {
         <div className="space-y-6">
           <div className="h-[300px] mt-6">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data.score_trend} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+              <LineChart data={scoreData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
                 <XAxis dataKey="date" tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} dy={10} />
                 <YAxis tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} />
@@ -162,7 +203,7 @@ export default function TimeSeriesPanel() {
             <div className="space-y-6 mt-8 animate-in fade-in duration-500">
               <div className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={topicData.data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <BarChart data={topicSeries || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
                     <XAxis dataKey="date" tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} dy={10} />
                     <YAxis tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} />
@@ -182,7 +223,7 @@ export default function TimeSeriesPanel() {
                 <div className="rounded-xl bg-foreground/[0.02] border border-border/50 p-5">
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-3">Matching Titles</h4>
                   <ul className="space-y-2 text-sm text-foreground/70">
-                    {topicData.data.flatMap((d) => d.matching_posts_titles || []).slice(0, 5).map((title, idx) => (
+                    {(topicSeries || []).flatMap((d) => d.matching_posts_titles || []).slice(0, 5).map((title, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="text-primary mt-0.5">•</span>
                         <span className="line-clamp-2">{title}</span>

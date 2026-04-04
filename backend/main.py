@@ -8,6 +8,7 @@ from fastapi import FastAPI, Body, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import numpy as np
+from groq import Groq
 from data_loader import DataLoader
 from embeddings import EmbeddingEngine
 from search import SemanticSearch
@@ -15,7 +16,7 @@ from clustering import TopicClusterer
 from network_analysis import NetworkAnalyzer
 from timeseries import TimeSeriesAnalyzer
 from chatbot import DataChatbot
-from config import GROQ_MODEL
+from config import GROQ_MODEL, GROQ_API_KEY
 from database import init_db
 from ingestion import start_scheduler
 
@@ -51,6 +52,7 @@ async def startup_event():
 
     app.state.cache_timeseries = {"ts": 0, "data": None}
     app.state.cache_clusters: Dict[int, Dict[str, Any]] = {}
+    app.state.cache_network_summary: Dict[str, Dict[str, Any]] = {}
     app.state.embeddings_error = ""
     
     # Start ingestion background tasks
@@ -70,6 +72,63 @@ def _ensure_embeddings():
         app.state.embeddings_error = str(exc)
         logger.exception("Database status failed")
         return None, str(exc)
+
+def _get_network_summary(network_type: str, metric: str, top_n: int, graph_json: Dict[str, Any]) -> str:
+    stats = graph_json.get("stats", {})
+    nodes = graph_json.get("nodes", [])
+    if not nodes:
+        return "No network data available for this selection."
+
+    cache_key = (
+        f"{network_type}:{metric}:{top_n}:"
+        f"{stats.get('num_nodes')}:{stats.get('num_edges')}:"
+        f"{stats.get('density')}:{stats.get('components')}"
+    )
+    cache = app.state.cache_network_summary
+    cached = cache.get(cache_key)
+    if cached and (time.time() - cached["ts"]) < 3600:
+        return cached["data"]
+
+    metric_label = "PageRank" if metric == "pagerank" else "betweenness centrality"
+    type_label = "author-to-domain" if network_type == "domain" else "author-to-author"
+    top_nodes = sorted(nodes, key=lambda n: n.get("score", 0), reverse=True)[:5]
+    top_desc = "; ".join(
+        f"{n.get('label','')} ({n.get('type','node')}, {n.get('score',0):.3f})"
+        for n in top_nodes
+        if n.get("label")
+    )
+    fallback = (
+        f"This {type_label} network has {stats.get('num_nodes', 0)} nodes and {stats.get('num_edges', 0)} edges, "
+        f"with density {stats.get('density', 0)} across {stats.get('components', 0)} components. "
+        f"Top nodes by {metric_label} are {top_desc or 'unavailable'}. "
+        "Higher centrality indicates more influence in this network."
+    )
+
+    summary = fallback
+    if GROQ_API_KEY:
+        prompt = (
+            "Summarize the network in 2-3 concise sentences for a non-technical reader. "
+            f"Network type: {type_label}. Centrality metric: {metric_label}. "
+            f"Stats: nodes={stats.get('num_nodes')}, edges={stats.get('num_edges')}, "
+            f"density={stats.get('density')}, components={stats.get('components')}. "
+            f"Top nodes: {top_desc or 'none'}. "
+            "Explain what the structure suggests (e.g., concentrated vs fragmented) without overclaiming."
+        )
+        try:
+            client = Groq(api_key=GROQ_API_KEY)
+            response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=120,
+                temperature=0.3,
+            )
+            summary = response.choices[0].message.content.strip()
+        except Exception:
+            summary = fallback
+
+    cache[cache_key] = {"ts": time.time(), "data": summary}
+    return summary
+
 
 @app.get("/api/health")
 async def health():
@@ -129,8 +188,8 @@ async def timeseries(granularity: str = "day"):
     if ts_cache["data"] and (time.time() - ts_cache["ts"]) < 600:
         return ts_cache["data"]
 
-    # Limit to top 2000 for TS
-    recent_posts = list(app.state.loader.collection.find({}, {"_id": 0, "embedding": 0}).sort("created_utc", -1).limit(2000))
+    # Remove limit(2000) to ensure historical data doesn't clip out artificially producing massive dips
+    recent_posts = list(app.state.loader.collection.find({}, {"_id": 0, "embedding": 0}).sort("created_utc", -1))
     ts = TimeSeriesAnalyzer(recent_posts)
     data = ts.get_all_timeseries_data()
     if granularity == "week":
@@ -144,10 +203,11 @@ async def timeseries(granularity: str = "day"):
 
 @app.get("/api/timeseries/topic")
 async def topic_timeseries(keyword: str = Query(...)):
-    recent_posts = list(app.state.loader.collection.find({}, {"_id": 0, "embedding": 0}).sort("created_utc", -1).limit(2000))
+    recent_posts = list(app.state.loader.collection.find({}, {"_id": 0, "embedding": 0}).sort("created_utc", -1))
     ts = TimeSeriesAnalyzer(recent_posts)
-    data = ts.get_topic_trend(keyword)
-    summary = ts.generate_timeseries_summary(data, f"topic trend for {keyword}") if data else ""
+    data = ts.get_topic_trend(keyword, include_gaps=True)
+    summary_source = ts.strip_gap_markers(data)
+    summary = ts.generate_timeseries_summary(summary_source, f"topic trend for {keyword}") if summary_source else ""
     return {"keyword": keyword, "data": data, "summary": summary}
 
 @app.get("/api/network")
@@ -165,6 +225,7 @@ async def network(type: str = "domain", top_n: int = 50, metric: str = "pagerank
         metric_dict = analyzer.compute_pagerank(G)
 
     graph_json = analyzer.get_graph_json(G, metric_dict, top_n_nodes=top_n)
+    graph_json["summary"] = _get_network_summary(type, metric, top_n, graph_json)
     return graph_json
 
 @app.get("/api/network/remove-top-node")
