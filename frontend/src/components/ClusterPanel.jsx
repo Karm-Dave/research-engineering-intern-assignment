@@ -41,13 +41,13 @@ export default function ClusterPanel() {
   }
 
   return (
-    <div className="glass-card rounded-2xl p-8 transition-shadow">
+    <div className="glass-card rounded-lg p-8 transition-shadow">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Topic Clusters</h2>
           <p className="text-sm text-foreground/50 mt-1">Tune the cluster count to reveal hidden macroscopic themes.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4 glass-subtle p-3 rounded-2xl">
+        <div className="flex flex-col sm:flex-row items-center gap-4 glass-subtle p-3 rounded-lg">
           <div className="flex items-center gap-3">
             <Settings2 className="w-4 h-4 text-foreground/40" />
             <span className="text-sm font-medium text-foreground/70">Clusters: {nClusters}</span>
@@ -76,7 +76,7 @@ export default function ClusterPanel() {
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-in fade-in">
           {Array.from({ length: 6 }).map((_, idx) => (
-            <div key={idx} className="bg-foreground/[0.02] border border-border shadow-sm rounded-xl p-4 h-40 animate-pulse" />
+            <div key={idx} className="bg-foreground/[0.05] border border-border shadow-sm rounded-lg p-4 h-40 animate-pulse" />
           ))}
         </div>
       )}
@@ -87,10 +87,10 @@ export default function ClusterPanel() {
             {data.map((cluster) => (
               <div
                 key={cluster.cluster_id}
-                className={`rounded-xl border transition-all cursor-pointer overflow-hidden ${
+                className={`rounded-lg border transition-all cursor-pointer overflow-hidden ${
                   expanded === cluster.cluster_id 
                     ? 'border-primary ring-1 ring-primary shadow-sm bg-card' 
-                    : 'border-border/60 hover:border-foreground/20 hover:bg-foreground/[0.01] bg-card'
+                    : 'border-border/60 hover:border-foreground/20 hover:bg-foreground/[0.04] bg-card'
                 }`}
                 onClick={() => setExpanded(expanded === cluster.cluster_id ? null : cluster.cluster_id)}
               >
@@ -112,14 +112,14 @@ export default function ClusterPanel() {
                 
                 <div className="px-4 pb-4 flex flex-wrap gap-1.5">
                   {(cluster.keywords || []).map((kw) => (
-                    <span key={kw} className="px-2.5 py-1 rounded-md bg-foreground/[0.03] border border-border/50 text-xs font-medium text-foreground/70">
+                    <span key={kw} className="px-2.5 py-1 rounded-md bg-foreground/[0.06] border border-border/50 text-xs font-medium text-foreground/70">
                       {kw}
                     </span>
                   ))}
                 </div>
 
                 {expanded === cluster.cluster_id && (
-                  <div className="px-4 pb-4 border-t border-border/30 bg-foreground/[0.01] pt-4">
+                  <div className="px-4 pb-4 border-t border-border/30 bg-foreground/[0.04] pt-4">
                     <p className="text-sm text-foreground/80 leading-relaxed font-serif italic border-l-2 border-primary/40 pl-3">
                       {cluster.summary}
                     </p>

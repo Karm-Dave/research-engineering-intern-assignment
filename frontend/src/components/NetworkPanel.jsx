@@ -85,18 +85,18 @@ export default function NetworkPanel() {
     : 'Blue nodes are authors.'
 
   return (
-    <div className="glass-card rounded-2xl p-8 transition-shadow">
+    <div className="glass-card rounded-lg p-8 transition-shadow">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 relative z-10 pointer-events-auto">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Network Explorer</h2>
-          <p className="text-sm text-foreground/50 mt-1">Inspect sharing dynamics and key actors.</p>
+          <p className="text-sm text-foreground/70 mt-1">Inspect sharing dynamics and key actors.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
         <div className="h-[560px] glass-subtle overflow-hidden flex relative z-0">
           {loading || !graph ? (
-            <div className="w-full flex flex-col items-center justify-center text-foreground/40 gap-3">
+            <div className="w-full flex flex-col items-center justify-center text-foreground/70 gap-3">
               <Network className="w-8 h-8 animate-pulse text-primary/50" />
               <span className="text-sm font-medium">Computing graph architecture...</span>
             </div>
@@ -127,24 +127,24 @@ export default function NetworkPanel() {
         <div className="space-y-4 flex flex-col relative z-10 pointer-events-auto">
 
         <div className="glass-subtle p-5">
-  <div className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-3">How To Read</div>
+  <div className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-3">How To Read</div>
   <p className="text-sm text-foreground/70 leading-relaxed">
     This view maps {typeLabel} relationships. Node size reflects {metricLabel} centrality; larger nodes are more influential.
   </p>
-  <div className="mt-3 text-xs text-foreground/60 space-y-1">
+  <div className="mt-3 text-xs text-foreground/70 space-y-1">
     <div>{edgeLabel}</div>
     <div>{nodeLegend}</div>
     <div>Click a node to highlight its direct connections.</div>
   </div>
   {graph?.stats && (
-    <div className="mt-3 text-xs text-foreground/60">
+    <div className="mt-3 text-xs text-foreground/70">
       Current: {graph.stats.num_nodes} nodes, {graph.stats.num_edges} edges, density {Number(graph.stats.density).toFixed(4)}, components {graph.stats.components}.
     </div>
   )}
 </div>
 
           <div className="glass-card p-5">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-4">
               <Settings2 className="w-4 h-4" /> Controls
             </div>
             <div className="space-y-4">
@@ -152,7 +152,7 @@ export default function NetworkPanel() {
                 <button
                   onClick={() => setType('domain')}
                   className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    type === 'domain' ? 'bg-card text-foreground shadow-sm' : 'text-foreground/60 hover:text-foreground'
+                    type === 'domain' ? 'bg-card text-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground'
                   }`}
                 >
                   Domain
@@ -160,7 +160,7 @@ export default function NetworkPanel() {
                 <button
                   onClick={() => setType('author')}
                   className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    type === 'author' ? 'bg-card text-foreground shadow-sm' : 'text-foreground/60 hover:text-foreground'
+                    type === 'author' ? 'bg-card text-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground'
                   }`}
                 >
                   Author
@@ -170,7 +170,7 @@ export default function NetworkPanel() {
                 <button
                   onClick={() => setMetric('pagerank')}
                   className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    metric === 'pagerank' ? 'bg-card text-foreground shadow-sm' : 'text-foreground/60 hover:text-foreground'
+                    metric === 'pagerank' ? 'bg-card text-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground'
                   }`}
                 >
                   PageRank
@@ -178,7 +178,7 @@ export default function NetworkPanel() {
                 <button
                   onClick={() => setMetric('betweenness')}
                   className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    metric === 'betweenness' ? 'bg-card text-foreground shadow-sm' : 'text-foreground/60 hover:text-foreground'
+                    metric === 'betweenness' ? 'bg-card text-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground'
                   }`}
                 >
                   Betweenness
@@ -186,7 +186,7 @@ export default function NetworkPanel() {
               </div>
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-medium text-foreground/60">Node Limit</label>
+                  <label className="text-xs font-medium text-foreground/70">Node Limit</label>
                   <span className="text-xs font-bold text-primary">{topN}</span>
                 </div>
                 <input
@@ -202,13 +202,13 @@ export default function NetworkPanel() {
           </div>
 
           <div className="glass-card p-5 flex-1 flex flex-col overflow-hidden">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-4 shrink-0">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-4 shrink-0">
               <Activity className="w-4 h-4" /> Top Nodes
             </div>
             <div className="space-y-3 overflow-y-auto pr-2 scrollbar-hide">
               {topNodes.map((node, idx) => (
                 <div key={node.id} className="flex items-center gap-3 group">
-                  <div className="text-[10px] font-mono text-foreground/40 w-4 text-right">{idx + 1}</div>
+                  <div className="text-[10px] font-mono text-foreground/70 w-4 text-right">{idx + 1}</div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                       {node.label}
@@ -228,17 +228,17 @@ export default function NetworkPanel() {
         {selectedNode && (
           <div className="glass-subtle p-4 flex gap-4">
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-wider text-foreground/40">Inspecting</div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-foreground/70">Inspecting</div>
               <div className="mt-1 font-semibold text-primary truncate text-lg">{selectedNode.label}</div>
             </div>
             <div className="flex gap-4 border-l border-border/50 pl-4 items-center">
                <div className="text-right">
-                  <div className="text-[10px] uppercase text-foreground/40 font-semibold mb-0.5">Centrality Score</div>
+                  <div className="text-[10px] uppercase text-foreground/70 font-semibold mb-0.5">Centrality Score</div>
                   <div className="font-mono text-sm">{selectedNode.score?.toFixed(4)}</div>
                </div>
                {selectedStats && (
                  <div className="text-right hidden sm:block">
-                   <div className="text-[10px] uppercase text-foreground/40 font-semibold mb-0.5">Total Connections</div>
+                   <div className="text-[10px] uppercase text-foreground/70 font-semibold mb-0.5">Total Connections</div>
                    <div className="font-mono text-sm">{selectedStats.linkCount}</div>
                  </div>
                )}
@@ -248,15 +248,15 @@ export default function NetworkPanel() {
         {graph?.stats && (
           <div className="glass-subtle p-4 flex items-center justify-between">
             <div>
-               <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground/40 mb-1">Global Nodes</div>
+               <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground/70 mb-1">Global Nodes</div>
                <div className="font-mono font-medium">{graph.stats.num_nodes}</div>
             </div>
             <div>
-               <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground/40 mb-1">Global Edges</div>
+               <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground/70 mb-1">Global Edges</div>
                <div className="font-mono font-medium">{graph.stats.num_edges}</div>
             </div>
             <div>
-               <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground/40 mb-1">Topology Density</div>
+               <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground/70 mb-1">Topology Density</div>
                <div className="font-mono font-medium">{Number(graph.stats.density).toFixed(4)}</div>
             </div>
           </div>

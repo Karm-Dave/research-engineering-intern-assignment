@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { getEmbeddingsViz } from '../api/client.js'
-import { Box, Filter, ExternalLink } from 'lucide-react'
+import { Box, Filter } from 'lucide-react'
 
 const colorScale = (score) => {
   const clamped = Math.max(0, Math.min(score / 500, 1))
@@ -66,7 +66,7 @@ export default function EmbeddingPanel() {
     const p = payload[0].payload
     const cluster = clusterMap.get(p.cluster_id)
     return (
-      <div className="bg-card border border-border shadow-premium rounded-xl p-4 max-w-sm animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-card border border-border shadow-premium rounded-lg p-4 max-w-sm animate-in fade-in zoom-in-95 duration-200">
         <div className="font-semibold tracking-tight text-foreground line-clamp-2 leading-snug">{p.title}</div>
         <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <div>
@@ -82,7 +82,7 @@ export default function EmbeddingPanel() {
           <div className="mt-3 pt-3 border-t border-border/50">
             <div className="flex flex-wrap gap-1.5">
               {cluster.keywords.slice(0, 4).map(kw => (
-                 <span key={kw} className="bg-foreground/[0.03] border border-border/40 text-[10px] uppercase font-semibold text-foreground/60 px-1.5 py-0.5 rounded">
+                 <span key={kw} className="bg-foreground/[0.06] border border-border/40 text-[10px] uppercase font-semibold text-foreground/60 px-1.5 py-0.5 rounded">
                    {kw}
                  </span>
               ))}
@@ -94,17 +94,17 @@ export default function EmbeddingPanel() {
   }
 
   if (!data) {
-    return <div className="glass-card rounded-2xl p-6 shadow-sm animate-pulse h-96" />
+    return <div className="glass-card rounded-lg p-6 shadow-sm animate-pulse h-96" />
   }
 
   return (
-    <div className="glass-card rounded-2xl p-8 transition-shadow">
+    <div className="glass-card rounded-lg p-8 transition-shadow">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Embedding Space</h2>
           <p className="text-sm text-foreground/50 mt-1">UMAP projection highlighting dense narrative formations.</p>
         </div>
-        <div className="flex items-center bg-foreground/[0.02] border border-border/50 p-1.5 rounded-xl">
+        <div className="flex items-center bg-foreground/[0.05] border border-border/50 p-1.5 rounded-lg">
           <div className="px-3 text-xs font-semibold uppercase tracking-wider text-foreground/40 hidden sm:block">Color By</div>
           <div className="flex">
             {['cluster', 'score', 'type'].map((mode) => (
@@ -165,7 +165,7 @@ export default function EmbeddingPanel() {
           <div className="glass-subtle p-4 flex items-start gap-3">
             <Box className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             <div className="text-sm text-foreground/70 leading-relaxed">
-              Export full high-dimensional vectors to <a className="text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1 transition-colors" href="https://projector.tensorflow.org/" target="_blank" rel="noreferrer">TensorFlow Projector <ExternalLink className="w-3 h-3" /></a>
+              Export full high-dimensional vectors to TensorFlow Projector.
             </div>
           </div>
         </div>

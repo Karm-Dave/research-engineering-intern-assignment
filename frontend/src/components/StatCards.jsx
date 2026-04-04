@@ -3,7 +3,7 @@ import { getStats } from '../api/client.js'
 import { FileText, Calendar, MessageCircle, TrendingUp } from 'lucide-react'
 
 const Card = ({ label, value, icon: Icon, trend }) => (
-  <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
+  <div className="glass-card rounded-lg p-6 flex flex-col justify-between">
     <div className="flex items-start justify-between">
       <div className="text-sm font-medium text-foreground/60">{label}</div>
       <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -33,7 +33,7 @@ export default function StatCards() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array.from({ length: 4 }).map((_, idx) => (
-          <div key={idx} className="glass-card rounded-2xl p-6 animate-pulse h-32" />
+          <div key={idx} className="glass-card rounded-lg p-6 animate-pulse h-32" />
         ))}
       </div>
     )

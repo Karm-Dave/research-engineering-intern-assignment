@@ -32,7 +32,7 @@ export default function PostTable() {
   const totalPages = Math.max(Math.ceil(total / perPage), 1)
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
+    <div className="glass-card rounded-lg overflow-hidden">
       <div className="p-6 border-b border-border/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-foreground">Dataset Explorer</h2>
@@ -62,7 +62,7 @@ export default function PostTable() {
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
-          <thead className="text-xs text-foreground/60 uppercase tracking-wider bg-white/5">
+          <thead className="text-xs text-foreground/60 uppercase tracking-wider bg-foreground/5">
             <tr>
               <th className="px-6 py-4 font-medium">Document Title</th>
               <th className="px-6 py-4 font-medium">Domain</th>
@@ -75,7 +75,7 @@ export default function PostTable() {
             {filtered.map((post) => (
               <tr
                 key={post.id}
-                className={`hover:bg-foreground/[0.02] cursor-pointer transition-colors ${expanded === post.id ? 'bg-primary/[0.02]' : ''}`}
+                className={`hover:bg-foreground/[0.05] cursor-pointer transition-colors ${expanded === post.id ? 'bg-primary/[0.02]' : ''}`}
                 onClick={() => setExpanded(expanded === post.id ? null : post.id)}
               >
                 <td className="px-6 py-4 text-foreground">
@@ -128,7 +128,7 @@ export default function PostTable() {
         </table>
       </div>
 
-      <div className="px-6 py-4 border-t border-border/30 flex items-center justify-between text-sm text-foreground/60 bg-white/5">
+      <div className="px-6 py-4 border-t border-border/30 flex items-center justify-between text-sm text-foreground/60 bg-foreground/5">
         <div>
           Showing page <span className="font-medium text-foreground">{page}</span> of <span className="font-medium text-foreground">{totalPages}</span>
         </div>

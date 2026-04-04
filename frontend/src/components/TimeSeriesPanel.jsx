@@ -32,7 +32,7 @@ export default function TimeSeriesPanel() {
   }
 
   if (loading || !data) {
-    return <div className="bg-card border border-border rounded-xl p-6 shadow-sm animate-pulse h-96" />
+    return <div className="bg-card border border-border rounded-lg p-6 shadow-sm animate-pulse h-96" />
   }
 
   const stripGapRows = (rows, key) =>
@@ -91,11 +91,11 @@ export default function TimeSeriesPanel() {
 
 
   return (
-    <div className="glass-card rounded-2xl p-8 transition-shadow">
+    <div className="glass-card rounded-lg p-8 transition-shadow">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Time Series Analysis</h2>
-          <p className="text-sm text-foreground/50 mt-1">Temporal signals with automated narrative summaries.</p>
+          <p className="text-sm text-foreground/70 mt-1">Temporal signals with automated narrative summaries.</p>
         </div>
         <div className="flex bg-foreground/5 p-1 rounded-lg">
           {tabs.map((tab) => (
@@ -105,7 +105,7 @@ export default function TimeSeriesPanel() {
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
                 activeTab === tab 
                   ? 'bg-card text-foreground shadow-sm' 
-                  : 'text-foreground/60 hover:text-foreground'
+                  : 'text-foreground/70 hover:text-foreground'
               }`}
             >
               {tab}
@@ -120,7 +120,7 @@ export default function TimeSeriesPanel() {
             <button
               onClick={() => setGranularity('day')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors ${
-                granularity === 'day' ? 'bg-primary/10 text-primary' : 'text-foreground/50 hover:bg-foreground/5'
+                granularity === 'day' ? 'bg-primary/10 text-primary' : 'text-foreground/70 hover:bg-foreground/5'
               }`}
             >
               Daily
@@ -128,7 +128,7 @@ export default function TimeSeriesPanel() {
             <button
               onClick={() => setGranularity('week')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors ${
-                granularity === 'week' ? 'bg-primary/10 text-primary' : 'text-foreground/50 hover:bg-foreground/5'
+                granularity === 'week' ? 'bg-primary/10 text-primary' : 'text-foreground/70 hover:bg-foreground/5'
               }`}
             >
               Weekly
@@ -144,15 +144,15 @@ export default function TimeSeriesPanel() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-                <XAxis dataKey="date" tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} dy={10} />
-                <YAxis tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} />
+                <XAxis dataKey="date" tick={{ fill: 'var(--foreground)', opacity: 0.75, fontSize: 11 }} tickLine={false} axisLine={false} dy={10} />
+                <YAxis tick={{ fill: 'var(--foreground)', opacity: 0.75, fontSize: 11 }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: 'var(--border)', strokeWidth: 1 }} />
                 <Area type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={2} fill="url(#countFill)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl glass-subtle p-5 mt-4">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-2">Automated Insight</h4>
+          <div className="rounded-lg glass-subtle p-5 mt-4">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-2">Automated Insight</h4>
             <p className="text-sm text-foreground/80 leading-relaxed font-serif italic">
               {granularity === 'week' ? data.summaries?.posts_per_week : data.summaries?.posts_per_day}
             </p>
@@ -166,15 +166,15 @@ export default function TimeSeriesPanel() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={scoreData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-                <XAxis dataKey="date" tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} dy={10} />
-                <YAxis tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} />
+                <XAxis dataKey="date" tick={{ fill: 'var(--foreground)', opacity: 0.75, fontSize: 11 }} tickLine={false} axisLine={false} dy={10} />
+                <YAxis tick={{ fill: 'var(--foreground)', opacity: 0.75, fontSize: 11 }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: 'var(--border)' }} />
                 <Line type="monotone" dataKey="avg_score" stroke="#10b981" strokeWidth={2} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl glass-subtle p-5 mt-4">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-2">Trend Analysis</h4>
+          <div className="rounded-lg glass-subtle p-5 mt-4">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-2">Trend Analysis</h4>
             <p className="text-sm text-foreground/80 leading-relaxed font-serif italic">
               {data.summaries?.score_trend}
             </p>
@@ -186,12 +186,12 @@ export default function TimeSeriesPanel() {
         <div className="space-y-6">
           <form onSubmit={handleTopicSearch} className="flex gap-3 max-w-lg">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-foreground/40 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-foreground/70 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 value={topicInput}
                 onChange={(e) => setTopicInput(e.target.value)}
                 placeholder="Query a topic keyword..."
-                className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
               />
             </div>
             <button className="px-5 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm shadow-sm hover:opacity-90 transition-opacity">
@@ -205,8 +205,8 @@ export default function TimeSeriesPanel() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topicSeries || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-                    <XAxis dataKey="date" tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <XAxis dataKey="date" tick={{ fill: 'var(--foreground)', opacity: 0.75, fontSize: 11 }} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis tick={{ fill: 'var(--foreground)', opacity: 0.75, fontSize: 11 }} tickLine={false} axisLine={false} />
                     <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'var(--foreground)', opacity: 0.05 }} />
                     <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -215,13 +215,13 @@ export default function TimeSeriesPanel() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {topicData.summary && (
-                  <div className="rounded-xl glass-subtle p-5">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-2">Topic Context</h4>
+                  <div className="rounded-lg glass-subtle p-5">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-2">Topic Context</h4>
                     <p className="text-sm text-foreground/80 leading-relaxed font-serif italic">{topicData.summary}</p>
                   </div>
                 )}
-                <div className="rounded-xl glass-subtle p-5">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-3">Matching Titles</h4>
+                <div className="rounded-lg glass-subtle p-5">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/70 mb-3">Matching Titles</h4>
                   <ul className="space-y-2 text-sm text-foreground/70">
                     {(topicSeries || []).flatMap((d) => d.matching_posts_titles || []).slice(0, 5).map((title, idx) => (
                       <li key={idx} className="flex items-start gap-2">

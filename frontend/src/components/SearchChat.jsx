@@ -132,8 +132,8 @@ export default function SearchChat() {
     <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6 max-w-screen-2xl mx-auto h-[calc(100vh-140px)]">
       
       {/* Search & Chat Panel */}
-      <div className="glass-card rounded-2xl flex flex-col h-full overflow-hidden">
-        <div className="px-6 py-4 border-b border-border/30 bg-white/5 flex items-center justify-between shrink-0">
+      <div className="glass-card rounded-lg flex flex-col h-full overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/30 bg-foreground/5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
               <Sparkles className="w-4 h-4" />
@@ -148,7 +148,7 @@ export default function SearchChat() {
         <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
           {messages.length === 0 ? (
              <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-4">
-               <div className="w-16 h-16 rounded-2xl bg-foreground/5 flex items-center justify-center mb-2 shadow-sm border border-border">
+               <div className="w-16 h-16 rounded-lg bg-foreground/5 flex items-center justify-center mb-2 shadow-sm border border-border">
                   <Database className="w-8 h-8 text-foreground/40" />
                </div>
                <h3 className="text-xl font-semibold tracking-tight">How can I help you explore?</h3>
@@ -160,10 +160,10 @@ export default function SearchChat() {
             messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[85%] px-5 py-4 rounded-2xl text-sm leading-relaxed ${
+                  className={`max-w-[85%] px-5 py-4 rounded-lg text-sm leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-foreground text-background shadow-premium' 
-                      : 'bg-foreground/[0.03] border border-border/50 text-foreground shadow-sm rounded-tl-sm'
+                      : 'bg-foreground/[0.06] border border-border/50 text-foreground shadow-sm rounded-tl-sm'
                   } ${msg.role === 'user' ? 'rounded-tr-sm' : ''}`}
                 >
                   <ReactMarkdown 
@@ -190,7 +190,7 @@ export default function SearchChat() {
           )}
           {loading && (
             <div className="flex justify-start">
-               <div className="max-w-[85%] px-5 py-4 rounded-2xl rounded-tl-sm text-sm bg-foreground/[0.03] border border-border/50 flex items-center gap-3 shadow-sm">
+               <div className="max-w-[85%] px-5 py-4 rounded-lg rounded-tl-sm text-sm bg-foreground/[0.06] border border-border/50 flex items-center gap-3 shadow-sm">
                   <span className="flex gap-1">
                      <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce"></span>
                      <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
@@ -220,7 +220,7 @@ export default function SearchChat() {
             </div>
           )}
           
-          <form onSubmit={handleSubmit} className="relative flex items-end rounded-2xl border border-white/10 bg-white/5 overflow-hidden focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/60 transition-all">
+          <form onSubmit={handleSubmit} className="relative flex items-end rounded-lg border border-border/60 bg-foreground/5 overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/60 transition-all">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -249,8 +249,8 @@ export default function SearchChat() {
       </div>
 
       {/* Database Results Panel */}
-      <div className="glass-card rounded-2xl flex flex-col h-full overflow-hidden">
-        <div className="px-6 py-4 border-b border-border/30 flex flex-col gap-4 bg-white/5 shrink-0">
+      <div className="glass-card rounded-lg flex flex-col h-full overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/30 flex flex-col gap-4 bg-foreground/5 shrink-0">
           <div>
             <h2 className="text-sm font-semibold tracking-tight">Source Documents</h2>
             <p className="text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mt-0.5">Semantic Rankings</p>
@@ -299,7 +299,7 @@ export default function SearchChat() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 bg-foreground/[0.01]">
+        <div className="flex-1 overflow-y-auto p-4 bg-foreground/[0.04]">
           {filteredResults.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center text-foreground/40 text-sm">
@@ -309,7 +309,7 @@ export default function SearchChat() {
           ) : (
             <div className="space-y-3">
               {filteredResults.map((r, i) => (
-                <div key={r.post?.id || i} className="group rounded-xl border border-border/60 bg-card p-4 hover:border-border hover:shadow-premium-hover transition-all">
+                <div key={r.post?.id || i} className="group rounded-lg border border-border/60 bg-card p-4 hover:border-border hover:shadow-premium-hover transition-all">
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="font-semibold text-sm leading-tight text-foreground line-clamp-2">
                        {r.post?.title}
