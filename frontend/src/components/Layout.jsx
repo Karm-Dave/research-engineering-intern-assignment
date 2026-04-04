@@ -44,9 +44,9 @@ export default function Layout({ children, toggleTheme, isDark }) {
   }
 
   return (
-    <div className="min-h-screen flex text-foreground bg-background transition-colors duration-300 font-sans">
+    <div className="min-h-screen flex text-foreground bg-transparent transition-colors duration-300 font-sans">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-card flex flex-col transition-colors duration-300 z-10">
+      <aside className="w-64 border-r border-border/40 glass-card flex flex-col transition-colors duration-300 z-10">
         <div className="px-6 h-16 shrink-0 flex items-center border-b border-border/50">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-premium">
@@ -102,7 +102,7 @@ export default function Layout({ children, toggleTheme, isDark }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navbar */}
-        <header className="h-16 border-b border-border bg-card flex items-center justify-between px-8 shrink-0 transition-colors duration-300">
+        <header className="h-16 border-b border-border/40 glass-card flex items-center justify-between px-8 shrink-0 transition-colors duration-300">
           <div className="flex-1 flex items-center">
             <form onSubmit={handleSearchClick} className="relative w-96 hidden md:block group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 group-focus-within:text-primary transition-colors" />
@@ -110,7 +110,7 @@ export default function Layout({ children, toggleTheme, isDark }) {
                 name="q"
                 type="text" 
                 placeholder="Search across the workspace..." 
-                className="w-full bg-background border border-border/80 rounded-lg pl-9 pr-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground placeholder:text-foreground/40 tracking-tight shadow-sm"
+                className="w-full bg-white/5 border border-white/10 rounded-full pl-9 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/60 transition-all text-foreground placeholder:text-foreground/40 tracking-tight"
               />
             </form>
           </div>
@@ -118,18 +118,18 @@ export default function Layout({ children, toggleTheme, isDark }) {
           <div className="flex items-center gap-4">
             <button 
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-foreground/60 hover:bg-foreground/5 hover:text-foreground transition-colors outline-none"
+              className="p-2 rounded-full text-foreground/60 bg-white/5 hover:bg-white/10 hover:text-foreground transition-colors outline-none"
               aria-label="Toggle theme"
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            <button className="p-2 rounded-lg text-foreground/60 hover:bg-foreground/5 hover:text-foreground transition-colors outline-none relative">
+            <button className="p-2 rounded-full text-foreground/60 bg-white/5 hover:bg-white/10 hover:text-foreground transition-colors outline-none relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 border-2 border-card"></span>
             </button>
             <div className="h-6 w-px bg-border mx-1"></div>
             <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-indigo-400 flex items-center justify-center text-white shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-white shadow-sm">
                 <User className="w-4 h-4" />
               </div>
             </button>
@@ -137,7 +137,7 @@ export default function Layout({ children, toggleTheme, isDark }) {
         </header>
 
         {/* Page Content Wrapper */}
-        <main className="flex-1 overflow-y-auto bg-background p-8">
+        <main className="flex-1 overflow-y-auto bg-transparent p-8">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

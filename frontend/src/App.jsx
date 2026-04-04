@@ -67,7 +67,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground transition-colors duration-300">
+      <div className="min-h-screen flex items-center justify-center bg-transparent text-foreground transition-colors duration-300">
         <div className="flex flex-col items-center gap-4 animate-pulse">
           <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
             <Activity className="w-6 h-6 animate-pulse" />

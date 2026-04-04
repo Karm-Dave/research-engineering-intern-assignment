@@ -41,13 +41,13 @@ export default function ClusterPanel() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-sm p-6 transition-shadow">
+    <div className="glass-card rounded-2xl p-8 transition-shadow">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Topic Clusters</h2>
           <p className="text-sm text-foreground/50 mt-1">Tune the cluster count to reveal hidden macroscopic themes.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-4 bg-foreground/[0.02] border border-border/50 p-2 pl-4 rounded-xl">
+        <div className="flex flex-col sm:flex-row items-center gap-4 glass-subtle p-3 rounded-2xl">
           <div className="flex items-center gap-3">
             <Settings2 className="w-4 h-4 text-foreground/40" />
             <span className="text-sm font-medium text-foreground/70">Clusters: {nClusters}</span>
@@ -129,7 +129,7 @@ export default function ClusterPanel() {
                       </div>
                       <ul className="space-y-2">
                         {cluster.posts?.slice(0, 3).map((p) => (
-                          <li key={p.id} className="text-sm flex items-start gap-2 text-foreground/70 bg-card border border-border/50 p-2 rounded-lg">
+                          <li key={p.id} className="text-sm flex items-start gap-2 text-foreground/70 glass-subtle p-2">
                             <span className="text-primary mt-0.5">•</span>
                             <div className="min-w-0">
                               <span className="truncate block font-medium">{p.title}</span>
@@ -145,7 +145,7 @@ export default function ClusterPanel() {
             ))}
           </div>
 
-          <div className="rounded-xl border border-border/60 bg-foreground/[0.02] p-6 h-fit sticky top-6">
+          <div className="glass-subtle p-6 h-fit sticky top-6">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-6">
               <PieChartIcon className="w-4 h-4" /> Component Distribution
             </div>

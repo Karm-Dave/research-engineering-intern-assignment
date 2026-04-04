@@ -91,7 +91,7 @@ export default function TimeSeriesPanel() {
 
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 shadow-sm transition-shadow">
+    <div className="glass-card rounded-2xl p-8 transition-shadow">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Time Series Analysis</h2>
@@ -151,7 +151,7 @@ export default function TimeSeriesPanel() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl bg-foreground/[0.02] border border-border/50 p-5 mt-4">
+          <div className="rounded-xl glass-subtle p-5 mt-4">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-2">Automated Insight</h4>
             <p className="text-sm text-foreground/80 leading-relaxed font-serif italic">
               {granularity === 'week' ? data.summaries?.posts_per_week : data.summaries?.posts_per_day}
@@ -173,7 +173,7 @@ export default function TimeSeriesPanel() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl bg-foreground/[0.02] border border-border/50 p-5 mt-4">
+          <div className="rounded-xl glass-subtle p-5 mt-4">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-2">Trend Analysis</h4>
             <p className="text-sm text-foreground/80 leading-relaxed font-serif italic">
               {data.summaries?.score_trend}
@@ -215,12 +215,12 @@ export default function TimeSeriesPanel() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {topicData.summary && (
-                  <div className="rounded-xl bg-foreground/[0.02] border border-border/50 p-5">
+                  <div className="rounded-xl glass-subtle p-5">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-2">Topic Context</h4>
                     <p className="text-sm text-foreground/80 leading-relaxed font-serif italic">{topicData.summary}</p>
                   </div>
                 )}
-                <div className="rounded-xl bg-foreground/[0.02] border border-border/50 p-5">
+                <div className="rounded-xl glass-subtle p-5">
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-3">Matching Titles</h4>
                   <ul className="space-y-2 text-sm text-foreground/70">
                     {(topicSeries || []).flatMap((d) => d.matching_posts_titles || []).slice(0, 5).map((title, idx) => (

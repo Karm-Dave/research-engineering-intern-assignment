@@ -94,11 +94,11 @@ export default function EmbeddingPanel() {
   }
 
   if (!data) {
-    return <div className="bg-card border border-border rounded-xl p-6 shadow-sm animate-pulse h-96" />
+    return <div className="glass-card rounded-2xl p-6 shadow-sm animate-pulse h-96" />
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-sm p-6 transition-shadow">
+    <div className="glass-card rounded-2xl p-8 transition-shadow">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Embedding Space</h2>
@@ -125,7 +125,7 @@ export default function EmbeddingPanel() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
-        <div className="h-[520px] rounded-xl border border-border/60 bg-foreground/[0.01]">
+        <div className="h-[520px] glass-subtle">
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart margin={{ top: 10, right: 30, bottom: 20, left: -20 }}>
               <XAxis dataKey="x" type="number" name="UMAP-1" tick={{ fill: 'var(--foreground)', opacity: 0.5, fontSize: 11 }} tickLine={false} axisLine={false} />
@@ -139,7 +139,7 @@ export default function EmbeddingPanel() {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-border/60 bg-card p-5">
+          <div className="glass-card p-5">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-foreground/40 mb-4">
               <Filter className="w-4 h-4" /> Filter Visibilities
             </div>
@@ -162,7 +162,7 @@ export default function EmbeddingPanel() {
               ))}
             </div>
           </div>
-          <div className="rounded-xl border border-border/60 bg-primary/5 p-4 flex items-start gap-3">
+          <div className="glass-subtle p-4 flex items-start gap-3">
             <Box className="w-5 h-5 text-primary shrink-0 mt-0.5" />
             <div className="text-sm text-foreground/70 leading-relaxed">
               Export full high-dimensional vectors to <a className="text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1 transition-colors" href="https://projector.tensorflow.org/" target="_blank" rel="noreferrer">TensorFlow Projector <ExternalLink className="w-3 h-3" /></a>

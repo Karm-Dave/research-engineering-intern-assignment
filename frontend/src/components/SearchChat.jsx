@@ -132,8 +132,8 @@ export default function SearchChat() {
     <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_1fr] gap-6 max-w-screen-2xl mx-auto h-[calc(100vh-140px)]">
       
       {/* Search & Chat Panel */}
-      <div className="bg-card border border-border rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
-        <div className="px-6 py-4 border-b border-border/50 bg-foreground/[0.01] flex items-center justify-between shrink-0">
+      <div className="glass-card rounded-2xl flex flex-col h-full overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/30 bg-white/5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
               <Sparkles className="w-4 h-4" />
@@ -203,7 +203,7 @@ export default function SearchChat() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t border-border shrink-0 bg-background">
+        <div className="p-4 border-t border-border/30 shrink-0 bg-transparent">
           {related.length > 0 && (
             <div className="mb-3 scrollbar-hide overflow-x-auto whitespace-nowrap pb-2">
               <div className="flex gap-2">
@@ -220,7 +220,7 @@ export default function SearchChat() {
             </div>
           )}
           
-          <form onSubmit={handleSubmit} className="relative flex items-end shadow-sm rounded-xl border border-border bg-card overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+          <form onSubmit={handleSubmit} className="relative flex items-end rounded-2xl border border-white/10 bg-white/5 overflow-hidden focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/60 transition-all">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -249,8 +249,8 @@ export default function SearchChat() {
       </div>
 
       {/* Database Results Panel */}
-      <div className="bg-card border border-border rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
-        <div className="px-6 py-4 border-b border-border/50 flex flex-col gap-4 bg-foreground/[0.01] shrink-0">
+      <div className="glass-card rounded-2xl flex flex-col h-full overflow-hidden">
+        <div className="px-6 py-4 border-b border-border/30 flex flex-col gap-4 bg-white/5 shrink-0">
           <div>
             <h2 className="text-sm font-semibold tracking-tight">Source Documents</h2>
             <p className="text-[10px] uppercase tracking-wider text-foreground/40 font-semibold mt-0.5">Semantic Rankings</p>

@@ -4,37 +4,53 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #09090b;
-    --card: #ffffff;
-    --card-foreground: #09090b;
-    --border: #e2e8f0;
-    --primary: #2563eb;
-    --primary-foreground: #f8fafc;
+    --background: #0b0f14;
+    --foreground: #f5f7fa;
+    --card: rgba(255, 255, 255, 0.08);
+    --card-foreground: #f5f7fa;
+    --border: rgba(255, 255, 255, 0.12);
+    --primary: #7aa2ff;
+    --primary-foreground: #0b0f14;
   }
 
   .dark {
-    --background: #09090b;
-    --foreground: #f8fafc;
-    --card: #1e293b;
-    --card-foreground: #f8fafc;
-    --border: #334155;
-    --primary: #3b82f6;
-    --primary-foreground: #09090b;
+    --background: #070b10;
+    --foreground: #f5f7fa;
+    --card: rgba(255, 255, 255, 0.1);
+    --card-foreground: #f5f7fa;
+    --border: rgba(255, 255, 255, 0.14);
+    --primary: #8ab0ff;
+    --primary-foreground: #0a0d12;
   }
 
   body {
-    @apply bg-background text-foreground tracking-tight transition-colors duration-300;
+    @apply text-foreground tracking-tight transition-colors duration-300;
+    background: radial-gradient(1200px 900px at 10% -10%, rgba(120, 150, 255, 0.18), transparent 55%),
+                radial-gradient(900px 700px at 90% 0%, rgba(90, 120, 200, 0.14), transparent 50%),
+                linear-gradient(180deg, #0b0f14 0%, #0c1118 50%, #0b0f14 100%);
+    background-attachment: fixed;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card border border-border shadow-sm rounded-xl overflow-hidden transition-all;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(18px) saturate(160%);
+    border-radius: 1rem;
+    transition: box-shadow 200ms ease, transform 200ms ease;
   }
-  
+
+  .glass-subtle {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px) saturate(150%);
+    border-radius: 0.9rem;
+  }
+
   .glass-card:hover {
-    @apply shadow-premium-hover;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
   }
 }
 
