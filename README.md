@@ -1,4 +1,4 @@
-# 📊 SocialScape: Investigative Research Dashboard
+# SocialScape: Investigative Research Dashboard
 
 <p align="center">
   <em>An interactive analysis platform mapping narrative spread, semantic clusters, and community influence across political networks.</em>
@@ -6,7 +6,7 @@
 
 ---
 
-## 📸 Overview
+## Overview
 
 <!-- PLACEHOLDER FOR SCREENSHOT: Overview Dashboard -->
 <!-- Add your main dashboard screenshot showing the layout below -->
@@ -15,9 +15,9 @@
 
 ---
 
-## 🚀 Features
+## Features
 
-### 1. 🔍 Semantic Search & Discovery
+### 1. Semantic Search & Discovery
 A highly relevant semantic query engine powered by dense vector embeddings. No exact keyword match required.
 
 <!-- PLACEHOLDER FOR SCREENSHOT: Semantic Search Results showing the zero keyword overlap -->
@@ -28,19 +28,19 @@ A highly relevant semantic query engine powered by dense vector embeddings. No e
 - **Example 2**: Querying _"California attorney general record"_ matches a post about _Kamala Harris's prosecutor past_. (Correct because it correlates the public figure to the descriptive geographic role).
 - **Example 3**: Querying _"capital punishment policy"_ matches debates on the _death penalty_. (Correct as it is structurally a semantic equivalent).
 
-### 2. 📈 Narrative Time-Series Analysis
+### 2. Narrative Time-Series Analysis
 Track the rise and fall of topics over time. Every chart features a robust **GenAI Summary**, digesting complex trend metrics into plain-language insights dynamically generated via Groq LLM for non-technical audiences.
 
 <!-- PLACEHOLDER FOR SCREENSHOT: Time Series Analysis Chart with the Groq Summary shown beneath it -->
 ![Time Series Analysis](docs/assets/time_series.png)
 
-### 3. 🧠 Topic Clustering Space
+### 3. Topic Clustering Space
 Dynamically cluster discourse into visual semantic spaces. Powered by high-dimensional UMAP projection and K-Means clustering, completely tunable via a UI parameter.
 
 <!-- PLACEHOLDER FOR SCREENSHOT: Topic Clustering / Nomic / UMAP Scatter Plot visually showing different colored clusters -->
 ![Topic Clustering Visual](docs/assets/topic_clusters.png)
 
-### 4. 🌐 Network & Influence Mapping
+### 4. Network & Influence Mapping
 Visualizing community interaction using graph mapping. Computes metrics like **PageRank** and **Betweenness Centrality** to identify narrative linchpins. 
 
 <!-- PLACEHOLDER FOR SCREENSHOT: Network / Graph Node Map showing connected accounts/topics -->
@@ -48,7 +48,7 @@ Visualizing community interaction using graph mapping. Computes metrics like **P
 
 ---
 
-## 🛠️ AI / ML Specifications & Architecture
+## AI / ML Specifications & Architecture
 
 - **Embeddings**: `BAAI/bge-small-en-v1.5` via `fastembed` (384 dimensions, cosine similarity).
 - **Dimensionality Reduction**: `UMAP` (umap-learn) — 5D for accurate clustering preprocessing, 2D for frontend visualization mapping.
@@ -74,7 +74,7 @@ graph TD;
 
 ---
 
-## 🛡️ Robustness & Edge Cases
+## Robustness & Edge Cases
 - **Invalid Queries**: Zero-state returns helpful messages for empty search queries or those < 3 characters.
 - **Graceful Nullity**: Empty datasets logically render safe components, clustering defaults to \( k=2 \) safely bounded up to \( k=50 \).
 - **Network Resiliency**: Disconnected sub-graphs do not break traversal or PageRank evaluation computations.
@@ -83,7 +83,7 @@ graph TD;
 
 ---
 
-## 💻 Local Setup Instructions
+## Local Setup Instructions
 
 1. Ensure **Python 3.10+** and **Node 18+** are installed.
 2. Install the backend stack:
@@ -104,14 +104,14 @@ graph TD;
 
 ---
 
-## 🎥 Demonstration & Walkthrough
+## Demonstration & Walkthrough
 
 <!-- PLACEHOLDER FOR YOUTUBE/GDRIVE VIDEO URL -->
 **[Watch the specific platform design decision walkthrough here](insert_your_youtube_or_gdrive_url_here)** 
 
 ---
 
-## 🌍 Live Dashboard
+## Live Dashboard
 
 <!-- PLACEHOLDER FOR LIVE HOSTING URL -->
 **[Explore SocialScape Dynamically Hosted](insert_your_live_hosted_url_here)**
