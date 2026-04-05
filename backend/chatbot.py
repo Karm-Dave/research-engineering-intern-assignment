@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeou
 from groq import Groq
 import logging
 
-from config import GROQ_API_KEY, GROQ_MODEL, SIMILARITY_THRESHOLD
+from config import GROQ_API_KEY, GROQ_MODEL, SIMILARITY_THRESHOLD, RANKING_MODE
 from search import SemanticSearch
 
 
@@ -75,7 +75,11 @@ class DataChatbot:
                 "search_results_count": 0,
             }
 
-        results = self.search_engine.search_reranked(query, top_k=10)
+        results = (
+            self.search_engine.search(query, top_k=10)
+            if str(RANKING_MODE).lower() == "old"
+            else self.search_engine.search_reranked(query, top_k=10)
+        )
 
         if results:
             filtered_results = []

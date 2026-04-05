@@ -10,6 +10,8 @@ CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "cache")
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 SIMILARITY_THRESHOLD = 0.5
 
+RANKING_MODE = os.getenv("RANKING_MODE", "new")  # "new" = reranked, "old" = semantic-only
+
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "simppl-index")
 
