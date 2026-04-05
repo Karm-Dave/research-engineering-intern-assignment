@@ -18,6 +18,7 @@ from chatbot import DataChatbot
 from config import GROQ_MODEL
 from database import init_db
 from ingestion import start_scheduler
+from config import FRONTEND_URL
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("simppl")
@@ -26,7 +27,7 @@ app = FastAPI(title="SimPPL Research Dashboard")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

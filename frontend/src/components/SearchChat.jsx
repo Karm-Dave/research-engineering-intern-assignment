@@ -195,15 +195,16 @@ export default function SearchChat() {
                       : 'bg-foreground/[0.06] border border-border/50 text-foreground shadow-sm rounded-tl-sm'
                   } ${msg.role === 'user' ? 'rounded-tr-sm' : ''}`}
                 >
-                  <ReactMarkdown 
-                    className="space-y-3 font-medium"
-                    components={{
-                      a: ({node, ...props}) => <a target="_blank" rel="noreferrer" className="text-primary hover:underline" {...props} />,
-                      h3: ({node, ...props}) => <h3 className="text-base font-semibold tracking-tight text-foreground mt-3" {...props} />
-                    }}
-                  >
-                    {msg.role === 'user' ? msg.content : formatAssistantContent(msg.content)}
-                  </ReactMarkdown>
+                  <div className="space-y-3 font-medium">
+                    <ReactMarkdown 
+                      components={{
+                        a: ({node, ...props}) => <a target="_blank" rel="noreferrer" className="text-primary hover:underline" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-base font-semibold tracking-tight text-foreground mt-3" {...props} />
+                      }}
+                    >
+                      {msg.role === 'user' ? msg.content : formatAssistantContent(msg.content)}
+                    </ReactMarkdown>
+                  </div>
                   
                   <div className={`mt-3 flex items-center gap-3 text-xs font-mono font-medium ${msg.role === 'user' ? 'text-background/50' : 'text-foreground/40'}`}>
                     <span>{msg.timestamp}</span>

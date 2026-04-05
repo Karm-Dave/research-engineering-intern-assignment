@@ -15,6 +15,7 @@ RANKING_MODE = os.getenv("RANKING_MODE", "new")  # "new" = reranked, "old" = sem
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "simppl-index")
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 MONGODB_URI = os.getenv("MONGODB_URI")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "simppl")
 MONGO_COLLECTION_NAME = os.getenv("MONGO_COLLECTION_NAME", "posts")

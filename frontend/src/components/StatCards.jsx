@@ -45,9 +45,9 @@ export default function StatCards() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card icon={FileText} label="Total Posts" value={stats.total_posts.toLocaleString()} trend="+12%" />
+      <Card icon={FileText} label="Total Posts" value={stats.total_posts.toLocaleString()} />
       <Card icon={Calendar} label="Date Range" value={dateRange} />
-      <Card icon={MessageCircle} label="Total Comments" value={stats.total_comments.toLocaleString()} trend="+8%" />
+      <Card icon={MessageCircle} label="Total Comments" value={stats.total_comments.toLocaleString()} />
       <Card icon={TrendingUp} label="Average Score" value={stats.avg_score} />
     </div>
   )
