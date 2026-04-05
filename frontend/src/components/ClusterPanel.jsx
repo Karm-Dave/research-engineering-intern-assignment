@@ -129,7 +129,11 @@ export default function ClusterPanel() {
                       </div>
                       <ul className="space-y-2">
                         {cluster.posts?.slice(0, 3).map((p) => {
-                          const postUrl = p.url || (p.permalink ? `https://www.reddit.com${p.permalink}` : '')
+                          const postUrl = p.reddit_url
+                          ? p.reddit_url
+                          : (p.permalink
+                            ? `https://www.reddit.com${p.permalink}`
+                            : (p.subreddit && p.id ? `https://www.reddit.com/r/${p.subreddit}/comments/${p.id}/` : ''))
                           return (
                             <li key={p.id} className="text-sm flex items-start gap-2 text-foreground/70 glass-subtle p-2">
                               <span className="text-primary mt-0.5">???</span>

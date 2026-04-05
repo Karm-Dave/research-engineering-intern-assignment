@@ -57,8 +57,8 @@ export const getClusters = (n = 8) => api.get(`/clusters?n_clusters=${n}`).then(
 export const getEmbeddingsViz = () => api.get('/embeddings-viz').then((r) => r.data)
 export const search = (query, topK = 10, filterDomain = null) =>
   api.post('/search', { query, top_k: topK, filter_domain: filterDomain }).then((r) => r.data)
-export const chat = (query, history = []) =>
-  api.post('/chat', { query, conversation_history: history }).then((r) => r.data)
+export const chat = (query, queryHistory = []) =>
+  api.post('/chat', { query, query_history: queryHistory }).then((r) => r.data)
 export const getDomains = () => api.get('/domains').then((r) => r.data)
 export const getAuthors = () => api.get('/authors').then((r) => r.data)
 export const getPosts = (page = 1, perPage = 20, sortBy = 'score') =>

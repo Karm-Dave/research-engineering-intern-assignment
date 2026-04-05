@@ -259,11 +259,19 @@ async def search(payload: Dict[str, Any] = Body(...)):
 async def chat(payload: Dict[str, Any] = Body(...)):
     _, err = _ensure_embeddings()
     query = payload.get("query", "")
-    history = payload.get("conversation_history", [])
+    query_history = payload.get("query_history")
     if not isinstance(query, str):
         return {"response": "Invalid query", "sources": [], "related_queries": [], "search_results_count": 0}
-    if not isinstance(history, list):
-        history = []
+    if not isinstance(query_history, list):
+        history = payload.get("conversation_history", [])
+        if isinstance(history, list):
+            query_history = [
+                t.get("content") for t in history
+                if isinstance(t, dict) and t.get("role") == "user" and isinstance(t.get("content"), str)
+            ]
+        else:
+            query_history = []
+    query_history = query_history[-5:]
 
     bot = app.state.chatbot
     if err:
@@ -271,9 +279,10 @@ async def chat(payload: Dict[str, Any] = Body(...)):
         results = searcher.search_lexical(query, top_k=5)
         sources = [r.get("post", {}) for r in results]
         response = bot._fallback_response(results) if results else err
-        return {"response": response, "sources": sources, "related_queries": [], "search_results_count": len(results)}
+        related = searcher.get_related_queries_from_history(query, query_history)
+        return {"response": response, "sources": sources, "related_queries": related, "search_results_count": len(results)}
 
-    return bot.chat(query, conversation_history=history)
+    return bot.chat(query, query_history=query_history)
 
 @app.get("/api/domains")
 async def domains():

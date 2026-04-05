@@ -190,12 +190,20 @@ class TimeSeriesAnalyzer:
             return cached["data"]
 
         data_sample = data[:50]
-        prompt = (
-            "You are a data analyst. Here is a time series of "
-            f"{metric_name} from multiple political subreddits: {data_sample}. "
-            "Write 2-3 sentences describing the key trend, any notable spikes, and what might explain them. "
-            "Be concise and specific."
-        )
+        prompt = f"""You are a data analyst analyzing time series data.
+
+You are given a time series of {metric_name} over time: {data_sample}.
+
+Write a narrative analysis describing:
+1. The overall trend over time.
+2. Any noticeable increases or decreases.
+3. Periods of high activity.
+4. Periods of low activity.
+5. How the early period compares to the later period.
+6. Any interesting patterns or changes in behavior over time.
+7. End with a short overall interpretation of what this trend means.
+
+Write this as a short analytical paragraph, not bullet points."""
         try:
             client = Groq(api_key=GROQ_API_KEY)
             response = client.chat.completions.create(

@@ -17,11 +17,39 @@ const sorters = {
 }
 
 export default function SearchChat() {
+  const getRedditUrl = (post) => {
+    if (!post) return ''
+    if (post.reddit_url) return post.reddit_url
+    if (post.permalink) return `https://www.reddit.com${post.permalink}`
+    if (post.subreddit && post.id) return `https://www.reddit.com/r/${post.subreddit}/comments/${post.id}/`
+    return ''
+  }
+  const formatAssistantContent = (content) => {
+    if (typeof content !== 'string') return content
+    const lines = content.split(/\r?\n/)
+    const out = []
+    const headingRe = /^([A-Z][A-Z\s]+):\s*(.*)$/
+    for (const rawLine of lines) {
+      const line = rawLine.trim()
+      const match = headingRe.exec(line)
+      if (match) {
+        const title = match[1].trim()
+        const rest = (match[2] || '').trim()
+        if (out.length && out[out.length - 1] !== '') out.push('')
+        out.push(`### ${title}`)
+        if (rest) out.push(rest)
+      } else {
+        out.push(rawLine)
+      }
+    }
+    return out.join('\n')
+  }
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState([])
   const [results, setResults] = useState([])
   const [message, setMessage] = useState('')
   const [related, setRelated] = useState([])
+  const [queryHistory, setQueryHistory] = useState([])
   const [loading, setLoading] = useState(false)
   const [domains, setDomains] = useState([])
   const [domainFilter, setDomainFilter] = useState('')
@@ -71,6 +99,11 @@ export default function SearchChat() {
     return list.sort(sorters[sortBy])
   }, [results, domainFilter, dateFrom, dateTo, sortBy])
 
+  const maxScore = useMemo(() => {
+    if (!filteredResults.length) return 0
+    return Math.max(...filteredResults.map((r) => r.score || 0))
+  }, [filteredResults])
+
   const triggerSearch = async (queryText) => {
     if (!queryText) return
     if (queryText.length < 3) {
@@ -84,23 +117,19 @@ export default function SearchChat() {
 
     const userMsg = { role: 'user', content: queryText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
     
-    // We get the current messages explicitly instead of using setState callback to have it right now for the API call
-    let currentHistory = []
-    setMessages((prev) => {
-      currentHistory = [...prev, userMsg]
-      return currentHistory
-    })
+    setMessages((prev) => [...prev, userMsg])
 
-    const history = currentHistory.map((m) => ({ role: m.role, content: m.content }))
+    const nextHistory = [...queryHistory, queryText].slice(-5)
+    setQueryHistory(nextHistory)
 
     try {
       const [searchRes, chatRes] = await Promise.all([
         search(queryText, 100, domainFilter || null),
-        chat(queryText, history)
+        chat(queryText, nextHistory)
       ])
 
       setResults(searchRes.results || [])
-      setRelated(searchRes.related_queries || [])
+      setRelated(chatRes.related_queries || searchRes.related_queries || [])
       if (searchRes.message) {
         setMessage(searchRes.message)
       }
@@ -169,10 +198,11 @@ export default function SearchChat() {
                   <ReactMarkdown 
                     className="space-y-3 font-medium"
                     components={{
-                      a: ({node, ...props}) => <a target="_blank" rel="noreferrer" className="text-primary hover:underline" {...props} />
+                      a: ({node, ...props}) => <a target="_blank" rel="noreferrer" className="text-primary hover:underline" {...props} />,
+                      h3: ({node, ...props}) => <h3 className="text-base font-semibold tracking-tight text-foreground mt-3" {...props} />
                     }}
                   >
-                    {msg.content}
+                    {msg.role === 'user' ? msg.content : formatAssistantContent(msg.content)}
                   </ReactMarkdown>
                   
                   <div className={`mt-3 flex items-center gap-3 text-xs font-mono font-medium ${msg.role === 'user' ? 'text-background/50' : 'text-foreground/40'}`}>
@@ -315,7 +345,7 @@ export default function SearchChat() {
                        {r.post?.title}
                     </div>
                     <div className="flex items-center justify-center shrink-0 w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-bold shadow-sm">
-                      {Math.round(r.score * 100)}
+                      {maxScore ? Math.round((r.score / maxScore) * 100) : 0}
                     </div>
                   </div>
                   <div className="text-xs text-foreground/60 font-mono mb-3 bg-foreground/5 inline-flex p-1 px-2 rounded-md items-center gap-2">
@@ -326,13 +356,16 @@ export default function SearchChat() {
                   <div className="text-sm text-foreground/70 leading-relaxed line-clamp-3 font-serif">
                     {r.post?.text || <span className="italic opacity-50">No text content</span>}
                   </div>
-                  {r.post?.url && (
-                     <div className="mt-3 pt-3 border-t border-border/40">
-                         <a href={r.post.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary font-medium hover:text-primary/70 transition-colors">
-                            Original Source <ExternalLink className="w-3 h-3" />
-                         </a>
-                     </div>
-                  )}
+{(() => {
+                    const redditUrl = getRedditUrl(r.post)
+                    return redditUrl ? (
+                      <div className="mt-3 pt-3 border-t border-border/40">
+                        <a href={redditUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary font-medium hover:text-primary/70 transition-colors">
+                          Original Source <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    ) : null
+                  })()}
                 </div>
               ))}
             </div>

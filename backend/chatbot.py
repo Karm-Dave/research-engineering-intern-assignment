@@ -35,6 +35,22 @@ class DataChatbot:
         self.posts = posts
         self.search_engine = search_engine
 
+    def _get_reddit_url(self, post: Dict[str, Any]) -> str:
+        reddit_url = post.get("reddit_url")
+        if reddit_url:
+            return reddit_url
+        permalink = post.get("permalink")
+        if permalink:
+            return f"https://www.reddit.com{permalink}"
+        subreddit = post.get("subreddit")
+        pid = post.get("id")
+        if subreddit and pid:
+            return f"https://www.reddit.com/r/{subreddit}/comments/{pid}/"
+        url = post.get("url", "")
+        if isinstance(url, str) and ("reddit.com" in url or "redd.it" in url):
+            return url
+        return ""
+
     def _build_context(self, results: List[Dict[str, Any]], top_k: int = 5) -> str:
         lines = []
         for i, item in enumerate(results[:top_k], start=1):
@@ -43,17 +59,14 @@ class DataChatbot:
             score = post.get("score", 0)
             date = post.get("created_date", "")
             text = post.get("text", "") or ""
-            if not text.strip():
-                url = f"https://reddit.com{post.get('permalink', '')}" if post.get('permalink') else post.get('url', '')
-            else:
-                url = post.get("url", "")
+            url = self._get_reddit_url(post)
             
             lines.append(
                 f"POST {i}: Title: {title} | Score: {score} | Date: {date} | URL: {url} | Text snippet: {text}"
             )
         return "\n".join(lines)
 
-    def chat(self, query: str, conversation_history: List[Dict[str, str]] = None) -> Dict[str, Any]:
+    def chat(self, query: str, query_history: List[str] = None) -> Dict[str, Any]:
         if not isinstance(query, str) or not query.strip():
             return {
                 "response": "Please provide a non-empty query.",
@@ -62,18 +75,25 @@ class DataChatbot:
                 "search_results_count": 0,
             }
 
-        results = self.search_engine.search(query, top_k=100)
-        
-        filtered_results = [r for r in results if r.get("score", 0.0) >= SIMILARITY_THRESHOLD]
-        if not filtered_results and results:
-            filtered_results = results[:2]
-        
+        results = self.search_engine.search_reranked(query, top_k=10)
+
+        if results:
+            filtered_results = []
+            for r in results:
+                sem_score = r.get("semantic_score", r.get("score", 0.0))
+                if sem_score >= SIMILARITY_THRESHOLD or r.get("lexical_match"):
+                    filtered_results.append(r)
+            if not filtered_results:
+                filtered_results = results[:2]
+        else:
+            filtered_results = []
+
         # Prioritize posts with actual text over purely linked posts
         filtered_results.sort(
             key=lambda x: (bool((x.get("post", {}).get("text") or "").strip()), x.get("score", 0.0)),
             reverse=True
         )
-        
+
         results = filtered_results
         sources = [r.get("post", {}) for r in results]
 
@@ -85,23 +105,52 @@ class DataChatbot:
                 "search_results_count": 0,
             }
 
-        system_prompt = (
-            "You are an expert researcher analyzing Reddit posts from multiple political subreddits. "
-            "Answer questions based on the provided post data. You MUST base your analysis PRIMARILY on posts that contain actual paragraph 'Text snippet' content. "
-            "Avoid citing posts with empty or missing Text snippets unless absolutely necessary to mention a highly relevant Title. "
-            "IMPORTANT: Whenever you refer to a post, explicitly format it as an inline Markdown link targeting its exact URL, like this: [POST 1](URL). "
-            "Provide comprehensive, in-depth analysis while strictly maintaining absolute accuracy. "
-            "Data from posts is provided as context - only use this data, do not hallucinate."
-        )
+        system_prompt = """You are a data analyst analyzing a collection of posts and discussions.
+
+Your job is NOT to simply answer questions, but to analyze the posts and extract insights, trends, and narratives from the data.
+
+When responding:
+1. Identify the main topic or theme.
+2. Summarize the key discussions or viewpoints.
+3. Highlight important or influential posts.
+4. Describe any patterns or trends if visible.
+5. Provide an overall insight or conclusion.
+
+IMPORTANT RULES:
+* Use only the provided post data.
+* Do NOT hallucinate information.
+* Prefer posts that contain actual text content over empty posts.
+* Base your analysis strictly on the retrieved posts.
+* Keep the response analytical and insight-focused, not conversational.
+
+You MUST format your response exactly like this:
+
+MAIN THEME:
+...
+
+KEY DISCUSSION POINTS:
+
+* ...
+* ...
+
+IMPORTANT POSTS:
+
+* Post title - why it matters
+
+PATTERNS OR TRENDS:
+...
+
+OVERALL INSIGHT:
+...
+
+Whenever you refer to a post, explicitly format it as an inline Markdown link targeting its exact URL, like this: [POST 1](URL). Use only the Reddit post URL (permalink) when creating links."""
 
         messages = [{"role": "system", "content": system_prompt}]
-        if isinstance(conversation_history, list):
-            for turn in conversation_history[-6:]:
-                if isinstance(turn, dict) and "role" in turn and "content" in turn:
-                    messages.append({"role": turn["role"], "content": turn["content"]})
-
         context = self._build_context(results, top_k=len(results))
-        user_message = f"Question: {query}\n\nContext:\n{context}"
+        user_message = f"""Question: {query}
+
+Context:
+{context}"""
         messages.append({"role": "user", "content": user_message})
 
         if not GROQ_API_KEY:
@@ -117,7 +166,7 @@ class DataChatbot:
             except Exception as e:
                 answer = f"[Response unavailable: {str(e)[:50]}]"
 
-        related_queries = self.search_engine.get_related_queries(query, results)
+        related_queries = self.search_engine.get_related_queries_from_history(query, query_history or [])
 
         return {
             "response": answer,
