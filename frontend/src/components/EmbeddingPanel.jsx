@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { getEmbeddingsViz } from '../api/client.js'
-import { Box, Filter } from 'lucide-react'
+import { Filter } from 'lucide-react'
 
 const colorScale = (score) => {
   const clamped = Math.max(0, Math.min(score / 500, 1))
@@ -160,12 +160,6 @@ export default function EmbeddingPanel() {
                   </div>
                 </label>
               ))}
-            </div>
-          </div>
-          <div className="glass-subtle p-4 flex items-start gap-3">
-            <Box className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-            <div className="text-sm text-foreground/70 leading-relaxed">
-              Export full high-dimensional vectors to TensorFlow Projector.
             </div>
           </div>
         </div>

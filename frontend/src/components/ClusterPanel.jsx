@@ -128,15 +128,30 @@ export default function ClusterPanel() {
                         <Layers className="w-3.5 h-3.5" /> Top Ranked Posts
                       </div>
                       <ul className="space-y-2">
-                        {cluster.posts?.slice(0, 3).map((p) => (
-                          <li key={p.id} className="text-sm flex items-start gap-2 text-foreground/70 glass-subtle p-2">
-                            <span className="text-primary mt-0.5">•</span>
-                            <div className="min-w-0">
-                              <span className="truncate block font-medium">{p.title}</span>
-                              <span className="text-xs font-mono text-emerald-500">score: {p.score}</span>
-                            </div>
-                          </li>
-                        ))}
+                        {cluster.posts?.slice(0, 3).map((p) => {
+                          const postUrl = p.url || (p.permalink ? `https://www.reddit.com${p.permalink}` : '')
+                          return (
+                            <li key={p.id} className="text-sm flex items-start gap-2 text-foreground/70 glass-subtle p-2">
+                              <span className="text-primary mt-0.5">???</span>
+                              <div className="min-w-0">
+                                {postUrl ? (
+                                  <a
+                                    href={postUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="truncate block font-medium text-primary hover:text-primary/80 transition-colors"
+                                  >
+                                    {p.title}
+                                  </a>
+                                ) : (
+                                  <span className="truncate block font-medium">{p.title}</span>
+                                )}
+                                <span className="text-xs font-mono text-emerald-500">score: {p.score}</span>
+                              </div>
+                            </li>
+                          )
+                        })}
                       </ul>
                     </div>
                   </div>

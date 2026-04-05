@@ -86,9 +86,20 @@ export default function PostTable() {
                   {expanded === post.id && (
                     <div className="mt-3 text-foreground/70 text-sm leading-relaxed max-w-2xl bg-foreground/5 p-4 rounded-lg border border-border/50">
                       {post.text || <span className="italic text-foreground/40">No text body provided.</span>}
-                      {post.url && (
-                        <a href={post.url} target="_blank" rel="noreferrer" className="block mt-3 text-primary hover:text-primary/80 font-medium truncate">
-                          {post.url}
+                      {(post.permalink || (post.subreddit && post.id)) && (
+                        <a
+                          href={post.permalink
+                            ? `https://www.reddit.com${post.permalink}`
+                            : `https://www.reddit.com/r/${post.subreddit}/comments/${post.id}/`
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block mt-3 text-primary hover:text-primary/80 font-medium truncate"
+                        >
+                          {post.permalink
+                            ? `https://www.reddit.com${post.permalink}`
+                            : `https://www.reddit.com/r/${post.subreddit}/comments/${post.id}/`
+                          }
                         </a>
                       )}
                     </div>

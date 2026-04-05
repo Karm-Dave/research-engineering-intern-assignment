@@ -60,6 +60,38 @@ export default function TimeSeriesPanel() {
     return weekStart.toISOString().slice(0, 10)
   }
 
+  const formatValue = (val, key) => {
+    if (!Number.isFinite(val)) return 'n/a'
+    if (key === 'avg_score') return val.toFixed(2)
+    return Math.round(val).toLocaleString()
+  }
+
+  const buildTrendNarrative = (series, valueKey, label) => {
+    const values = (series || [])
+      .map((d) => Number(d?.[valueKey]))
+      .filter((v) => Number.isFinite(v))
+    if (values.length < 6) return ''
+    const window = Math.min(7, Math.max(3, Math.floor(values.length / 3)))
+    const recent = values.slice(-window)
+    const prior = values.slice(-window * 2, -window)
+    if (recent.length == 0 || prior.length == 0) return ''
+    const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length
+    const recentAvg = avg(recent)
+    const priorAvg = avg(prior)
+    const overallAvg = avg(values)
+    const lastVal = values[values.length - 1]
+    const maxVal = Math.max(...values)
+    const minVal = Math.min(...values)
+    const deltaPct = priorAvg ? ((recentAvg - priorAvg) / priorAvg) * 100 : 0
+    const absPct = Math.abs(deltaPct)
+    let direction = 'stable'
+    if (absPct >= 8) direction = deltaPct > 0 ? 'rising' : 'cooling'
+    const deltaLine = priorAvg ? `${label} is ${direction} (${deltaPct > 0 ? 'up' : 'down'} ${absPct.toFixed(1)}% vs the prior window).` : `${label} is ${direction}.`
+    const levelLine = `Latest value ${formatValue(lastVal, valueKey)} vs an overall average of ${formatValue(overallAvg, valueKey)}.`
+    const rangeLine = `Observed range: ${formatValue(minVal, valueKey)}-${formatValue(maxVal, valueKey)}.`
+    return `${deltaLine} ${levelLine} ${rangeLine}`
+  }
+
   const dailyData = stripGapRows(data.posts_per_day, 'date').filter((d) => !isInGap(d.date))
   const weeklyData = stripGapRows(data.posts_per_week, 'week').filter((d) => {
     const weekLabel = d.week ?? d.date
@@ -156,6 +188,9 @@ export default function TimeSeriesPanel() {
             <p className="text-sm text-foreground/80 leading-relaxed font-serif italic">
               {granularity === 'week' ? data.summaries?.posts_per_week : data.summaries?.posts_per_day}
             </p>
+            {buildTrendNarrative(volumeData, 'count', granularity === 'week' ? 'Weekly post volume' : 'Daily post volume') && (
+              <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{buildTrendNarrative(volumeData, 'count', granularity === 'week' ? 'Weekly post volume' : 'Daily post volume')}</p>
+            )}
           </div>
         </div>
       )}
@@ -178,6 +213,9 @@ export default function TimeSeriesPanel() {
             <p className="text-sm text-foreground/80 leading-relaxed font-serif italic">
               {data.summaries?.score_trend}
             </p>
+            {buildTrendNarrative(scoreData, 'avg_score', 'Average score') && (
+              <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{buildTrendNarrative(scoreData, 'avg_score', 'Average score')}</p>
+            )}
           </div>
         </div>
       )}
