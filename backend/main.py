@@ -17,7 +17,6 @@ from timeseries import TimeSeriesAnalyzer
 from chatbot import DataChatbot
 from config import GROQ_MODEL
 from database import init_db
-from ingestion import start_scheduler
 from config import FRONTEND_URL
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")
@@ -54,8 +53,6 @@ async def startup_event():
     app.state.cache_clusters: Dict[int, Dict[str, Any]] = {}
     app.state.embeddings_error = ""
     
-    # Start ingestion background tasks
-    start_scheduler()
     logger.info("Application initialized via MongoDB Atlas.")
 
 def _ensure_embeddings():
