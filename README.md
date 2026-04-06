@@ -1,117 +1,144 @@
-# SocialScape: Investigative Research Dashboard
+# Arcanum — Investigative Research Dashboard
 
 <p align="center">
-  <em>An interactive analysis platform mapping narrative spread, semantic clusters, and community influence across political networks.</em>
+  <img src="./Screenshots/overview.png" alt="Arcanum Dashboard" width="100%" />
+</p>
+
+<p align="center">
+  <em>An interactive intelligence platform mapping narrative spread, semantic clusters, and community influence across political discourse networks.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Karm-Dave/research-engineering-intern-assignment">
+    <img src="https://img.shields.io/badge/GitHub-Karm--Dave%2Fresearch--engineering--intern--assignment-181717?style=flat-square&logo=github" />
+  </a>
+  <a href="https://arcanumdata.vercel.app/">
+    <img src="https://img.shields.io/badge/Live-arcanumdata.vercel.app-22c55e?style=flat-square&logo=vercel" />
+  </a>
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python" />
+  <img src="https://img.shields.io/badge/Node-18+-339933?style=flat-square&logo=node.js" />
 </p>
 
 ---
 
-## Overview
+## What is Arcanum?
 
-<!-- PLACEHOLDER FOR SCREENSHOT: Overview Dashboard -->
-<!-- Add your main dashboard screenshot showing the layout below -->
-![Overview Dashboard](docs/assets/overview.png)
-> *The central hub: Explore cross-ideological trends from a consolidated dataset.*
+Arcanum is a full-stack investigative research dashboard built to decode how narratives form, spread, and evolve across political communities online. It combines **semantic search**, **narrative time-series tracking**, **topic clustering**, and **network influence mapping** into a single cohesive intelligence interface — powered by ML embeddings, graph algorithms, and generative AI.
 
 ---
 
 ## Features
 
 ### 1. Semantic Search & Discovery
-A highly relevant semantic query engine powered by dense vector embeddings. No exact keyword match required.
 
-<!-- PLACEHOLDER FOR SCREENSHOT: Semantic Search Results showing the zero keyword overlap -->
-![Semantic Search & Chatbot](docs/assets/semantic_search.png)
+A dense vector embedding search engine — no exact keyword matching required. Query by concept, not by keyword.
+
+![Semantic Search](./Screenshots/semantic_search.png)
 
 **Zero Keyword Overlap Examples:**
-- **Example 1**: Querying _"people helping each other without institutions"_ retrieves discussions on _mutual aid_. (Correct because it perfectly captures the definition conceptually).
-- **Example 2**: Querying _"California attorney general record"_ matches a post about _Kamala Harris's prosecutor past_. (Correct because it correlates the public figure to the descriptive geographic role).
-- **Example 3**: Querying _"capital punishment policy"_ matches debates on the _death penalty_. (Correct as it is structurally a semantic equivalent).
 
-### 2. Narrative Time-Series Analysis
-Track the rise and fall of topics over time. Every chart features a robust **GenAI Summary**, digesting complex trend metrics into plain-language insights dynamically generated via Groq LLM for non-technical audiences.
-
-<!-- PLACEHOLDER FOR SCREENSHOT: Time Series Analysis Chart with the Groq Summary shown beneath it -->
-![Time Series Analysis](docs/assets/time_series.png)
-
-### 3. Topic Clustering Space
-Dynamically cluster discourse into visual semantic spaces. Powered by high-dimensional UMAP projection and K-Means clustering, completely tunable via a UI parameter.
-
-<!-- PLACEHOLDER FOR SCREENSHOT: Topic Clustering / Nomic / UMAP Scatter Plot visually showing different colored clusters -->
-![Topic Clustering Visual](docs/assets/topic_clusters.png)
-
-### 4. Network & Influence Mapping
-Visualizing community interaction using graph mapping. Computes metrics like **PageRank** and **Betweenness Centrality** to identify narrative linchpins. 
-
-<!-- PLACEHOLDER FOR SCREENSHOT: Network / Graph Node Map showing connected accounts/topics -->
-![Network Analysis Node Map](docs/assets/network_graph.png)
+| Query | Retrieved Topic | Why It Works |
+|---|---|---|
+| *"people helping each other without institutions"* | Mutual Aid discussions | Captures the conceptual definition, not the label |
+| *"California attorney general record"* | Kamala Harris's prosecutor past | Maps public figure to geographic role descriptor |
+| *"capital punishment policy"* | Death penalty debates | Structurally semantic equivalent |
 
 ---
 
-## AI / ML Specifications & Architecture
+### 2. Narrative Time-Series Analysis
 
-- **Embeddings**: `BAAI/bge-small-en-v1.5` via `fastembed` (384 dimensions, cosine similarity).
-- **Dimensionality Reduction**: `UMAP` (umap-learn) — 5D for accurate clustering preprocessing, 2D for frontend visualization mapping.
-- **Clustering Engine**: `KMeans` (scikit-learn) with a strictly bounded \( k \) spanning 2–50 clusters.
-- **Network Centrality**: `PageRank` (\(\alpha = 0.85\)) via `NetworkX` to isolate super-spreaders.
-- **Generative AI**: `llama-3.3-70b-versatile` via **Groq** for conversational analytics and time-series plain text summaries.
+Track how topics rise and fall over time. Each chart includes a **GenAI Summary** — plain-language insight dynamically generated via a Llama LLM — so non-technical audiences can immediately grasp trend significance.
+
+![Time Series Analysis](./Screenshots/time_series.png)
+
+---
+
+### 3. Topic Clustering Space
+
+Cluster political discourse into visual semantic spaces using high-dimensional UMAP projection and K-Means clustering. All parameters are fully tunable via the UI.
+
+![Topic Clustering](./Screenshots/topic_clusters.png)
+
+---
+
+### 4. Network & Influence Mapping
+
+Visualise community interaction as a force-directed graph. Arcanum computes **PageRank** and **Betweenness Centrality** to surface narrative linchpins — the accounts and topics that act as bridges or amplifiers across communities.
+
+![Network Graph](./Screenshots/network_graph.png)
+
+---
+
+## Architecture
 
 ```mermaid
 graph TD;
     A[Reddit JSONL Data] --> B[Data Loader];
-    B --> C[Embedding Engine <br> fastembed];
+    B --> C[Embedding Engine\nMiniLM via sentence-transformers];
     C --> D[Semantic Vector Store];
-    C --> E[Topic Clusterer <br> KMeans + UMAP];
-    C --> F[Network Analyzer <br> NetworkX];
-    
+    C --> E[Topic Clusterer\nKMeans + UMAP];
+    C --> F[Network Analyzer\nNetworkX];
+
     D --> G[FastAPI Service Layer];
     E --> G;
     F --> G;
-
     G <--> H[React + Vite Frontend];
-    G <--> I[Groq LLM <br> Insights & Summaries];
+    G <--> I[Llama LLM\nInsights & Summaries];
 ```
 
 ---
 
+## AI / ML Stack
+
+| Component | Technology | Detail |
+|---|---|---|
+| **Embeddings** | `all-MiniLM-L6-v2` via `sentence-transformers` | 384 dimensions, cosine similarity |
+| **Dimensionality Reduction** | `UMAP` (umap-learn) | 5D for clustering preprocessing, 2D for frontend visualisation |
+| **Clustering Engine** | `KMeans` (scikit-learn) | Bounded *k* spanning 2–50 clusters |
+| **Network Centrality** | `PageRank` (α = 0.85) via `NetworkX` | Isolates super-spreaders across communities |
+| **Generative AI** | `Llama` via Groq | Conversational analytics & time-series plain-language summaries |
+
+---
+
 ## Robustness & Edge Cases
-- **Invalid Queries**: Zero-state returns helpful messages for empty search queries or those < 3 characters.
-- **Graceful Nullity**: Empty datasets logically render safe components, clustering defaults to \( k=2 \) safely bounded up to \( k=50 \).
-- **Network Resiliency**: Disconnected sub-graphs do not break traversal or PageRank evaluation computations.
-- **API Limits**: The AI assistant gracefully throws explicit UI messages when rate limits/timeout bounds are reached.
-- **Internationalization**: Non-English texts natively process through standard embedding vector spaces. 
+
+- **Invalid Queries** — Zero-state returns helpful messages for empty or sub-3-character queries.
+- **Graceful Nullity** — Empty datasets render safe fallback components; clustering defaults safely to *k = 2*.
+- **Network Resiliency** — Disconnected subgraphs do not break traversal or PageRank computations.
+- **API Limits** — Explicit UI messages surface when Groq rate limits or timeout bounds are hit.
+- **Internationalization** — Non-English text processes natively through the embedding vector space.
 
 ---
 
-## Local Setup Instructions
+## Local Setup
 
-1. Ensure **Python 3.10+** and **Node 18+** are installed.
-2. Install the backend stack:
-   ```bash
-   python -m pip install -r backend/requirements.txt
-   ```
-3. Boot up the user interface:
-   ```bash
-   cd frontend && npm install && npm run build
-   ```
-4. Launch the REST server locally:
-   ```bash
-   cd backend && uvicorn main:app --host 0.0.0.0 --port 8000
-   ```
-   *Dashboard live at `http://localhost:8000`*
+**Prerequisites:** Python 3.10+, Node 18+
 
-*(Windows users: Utilize the provided `start.sh` via Git Bash, or run the `start.ps1` helper)*
+```bash
+# 1. Clone the repository
+git clone https://github.com/Karm-Dave/research-engineering-intern-assignment.git
+cd research-engineering-intern-assignment
 
----
+# 2. Install backend dependencies
+python -m pip install -r backend/requirements.txt
 
-## Demonstration & Walkthrough
+# 3. Build the frontend
+cd frontend && npm install && npm run build && cd ..
 
-<!-- PLACEHOLDER FOR YOUTUBE/GDRIVE VIDEO URL -->
-**[Watch the specific platform design decision walkthrough here](insert_your_youtube_or_gdrive_url_here)** 
+# 4. Launch the server
+cd backend && uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+Dashboard live at **`http://localhost:8000`**
+
+> **Windows users:** Use the provided `start.sh` via Git Bash or run the `start.ps1` helper script.
 
 ---
 
-## Live Dashboard
+## Demo & Links
 
-<!-- PLACEHOLDER FOR LIVE HOSTING URL -->
-**[Explore SocialScape Dynamically Hosted](insert_your_live_hosted_url_here)**
+| | |
+|---|---|
+| **Walkthrough Video** | [Watch the platform design decision walkthrough](https://drive.google.com/drive/folders/1Be9Vcst3-13Wqen_HsCEw_46uMmNilIA?usp=sharing) |
+| **Live Dashboard** | [arcanumdata.vercel.app](https://arcanumdata.vercel.app/) |
+| **Repository** | [github.com/Karm-Dave/research-engineering-intern-assignment](https://github.com/Karm-Dave/research-engineering-intern-assignment) |
