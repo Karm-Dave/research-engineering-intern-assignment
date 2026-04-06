@@ -113,7 +113,58 @@ class NetworkAnalyzer:
             return {"nodes": [], "edges": [], "stats": self._graph_stats(G)}
 
         ranked = sorted(metric_dict.items(), key=lambda x: x[1], reverse=True)
-        top_nodes = {node for node, _ in ranked[:top_n_nodes]}
+
+        # -----------------------------------------------------------
+        # Connectivity-aware node selection
+        # Strategy: pick top seed nodes, then pull in their neighbors
+        # so edges actually appear in the visualization.
+        # -----------------------------------------------------------
+        seed_count = min(top_n_nodes // 2, len(ranked))
+        top_nodes: set = set()
+
+        # Step 1: Seed with top nodes by centrality
+        for node, _ in ranked[:seed_count]:
+            top_nodes.add(node)
+
+        # Step 2: For each seed, add its best-connected neighbors
+        remaining = top_n_nodes - len(top_nodes)
+        neighbor_candidates: list = []
+        for seed in list(top_nodes):
+            for neighbor in G.neighbors(seed):
+                if neighbor not in top_nodes:
+                    w = G.edges[seed, neighbor].get("weight", 1)
+                    neighbor_candidates.append((neighbor, w, metric_dict.get(neighbor, 0.0)))
+
+        # Also check reverse edges for DiGraph
+        if isinstance(G, nx.DiGraph):
+            for seed in list(top_nodes):
+                for pred in G.predecessors(seed):
+                    if pred not in top_nodes:
+                        w = G.edges[pred, seed].get("weight", 1)
+                        neighbor_candidates.append((pred, w, metric_dict.get(pred, 0.0)))
+
+        # Sort neighbors by (edge weight * centrality) to get the most relevant ones
+        seen: set = set()
+        unique_neighbors: list = []
+        for n, w, s in neighbor_candidates:
+            if n not in seen:
+                seen.add(n)
+                unique_neighbors.append((n, w * (1 + s)))
+        unique_neighbors.sort(key=lambda x: x[1], reverse=True)
+
+        for n, _ in unique_neighbors:
+            if remaining <= 0:
+                break
+            top_nodes.add(n)
+            remaining -= 1
+
+        # Step 3: Fill any remaining budget from global ranking
+        for node, _ in ranked:
+            if remaining <= 0:
+                break
+            if node not in top_nodes:
+                top_nodes.add(node)
+                remaining -= 1
 
         scores = [metric_dict.get(n, 0.0) for n in top_nodes]
         max_score = max(scores) if scores else 1.0
@@ -125,8 +176,8 @@ class NetworkAnalyzer:
             node_type = G.nodes[node].get("type", "author") if node in G.nodes else "author"
             score = float(metric_dict.get(node, 0.0))
             norm = (score - min_score) / denom
-            size = 5 + norm * 30
-            color = "#60a5fa" if node_type == "author" else "#f59e0b"
+            size = 15 + norm * 35
+            color = "#e63946" if node_type == "author" else "#f4a261"
             nodes.append(
                 {
                     "id": node,
