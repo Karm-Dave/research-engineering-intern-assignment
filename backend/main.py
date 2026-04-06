@@ -26,7 +26,7 @@ app = FastAPI(title="SimPPL Research Dashboard")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://arcanumdata.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
