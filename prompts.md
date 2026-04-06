@@ -1,182 +1,181 @@
 # AI Prompts Documentation
 
-This document records the major AI prompts used during development of the Reddit Social Media Dashboard project. These prompts were used for backend development, embeddings, clustering, RAG chatbot improvements, UI fixes, deployment, and system architecture changes.
+This document records the major AI prompts used during development of the Reddit Social Media Dashboard / Investigative Research Dashboard project. These prompts were used for backend development, embeddings, clustering, RAG chatbot improvements, UI fixes, deployment, database migration, and system architecture changes.
+
+---
+
+## Tools Used
+
+The following AI tools were used during development (free tiers):
+
+- OpenAI Codex / ChatGPT  
+- Claude  
+- Cursor / Copilot-style autocomplete tools  
+- Anti-gravity / agent-based coding tools  
+
+These tools were used for scaffolding, debugging, refactoring, and system design assistance.
+
+---
+
+## Development Flow Overview
+
+The development followed this sequence:
+
+1. Initial scaffold with embeddings, chatbot, clustering using `data.jsonl`  
+2. Bootstrap database and MongoDB Atlas integration  
+3. Migration to Pinecone for vector search optimization  
+4. Live Reddit ingestion via `.json` endpoints  
+5. UI improvements with Roman-style design  
+6. Ranking system with environment-based modes  
 
 ---
 
 ## 1. Initial Scaffold & Backend Setup
 **Prompt:**  
-"Generate a FastAPI backend scaffold for a social media dashboard. Include Pydantic models for Reddit JSONL ingestion, a DataLoader class, and a basic semantic search endpoint."
+"Generate a FastAPI backend scaffold for a social media dashboard. Include Pydantic models for Reddit JSONL ingestion, a DataLoader class, semantic search endpoint, clustering pipeline using MiniLM embeddings, UMAP dimensionality reduction, and a simple RAG chatbot system. The project should work with an existing data.jsonl file."
 
 **Fix / Action Taken:**  
 - Fixed missing dependency declarations  
 - Replaced mocked data payload with proper JSONL parsing  
 - Added handling for corrupted lines securely  
+- Added embedding caching  
 
 ---
 
 ## 2. Embedding and Semantic Search Implementation
 **Prompt:**  
-"Write a Python script using `fastembed` to compute embeddings for reddit post titles and text. Set up a local vector cache using cosine similarity for the semantic search endpoint. Handle extreme and non-English edge cases natively."
+"Write a Python script using fastembed or sentence-transformers MiniLM model to compute embeddings for reddit post titles and text. Store embeddings locally and implement cosine similarity semantic search. Handle empty text, non-English text, and very small queries."
 
 **Fix / Action Taken:**  
 - Adjusted chunk sizes  
-- Ensured vector format matched `BAAI/bge-small-en-v1.5` (384 dimensions)  
-- Added exception handling for very small query strings  
+- Ensured correct embedding dimensions  
+- Added exception handling for small queries  
+- Combined full text instead of truncation  
 
 ---
 
 ## 3. Topic Clustering & UMAP Preprocessing
 **Prompt:**  
-"Create a module to cluster reddit posts by topic using scikit-learn's KMeans. Use 5D UMAP preprocessing for the clustering space and calculate 2D UMAP for UI rendering. Expose the number of clusters (k) as a parameter."
+"Create a clustering module for reddit posts using UMAP for dimensionality reduction and KMeans clustering. Use higher dimensional UMAP for clustering space and 2D UMAP for visualization. Allow cluster count to be configurable."
 
 **Fix / Action Taken:**  
-- Fixed dimensionality crash when dataset size dropped below UMAP min samples  
-- Restricted cluster tuning range to 2–50  
+- Fixed UMAP crash for small datasets  
+- Restricted cluster range  
+- Stored cluster labels for reuse  
 
 ---
 
 ## 4. Network Graph Analysis
 **Prompt:**  
-"Build a NetworkX analysis pipeline to model a graph of users in this reddit dataset. Compute PageRank and betweenness centrality. Gracefully manage completely disconnected components."
+"Build a NetworkX graph analysis pipeline to model relationships between posts/users/keywords. Compute PageRank and betweenness centrality and handle disconnected components."
 
 **Fix / Action Taken:**  
-- Changed relationship mapping to keyword interaction logic  
-- Created custom iterator to compute metrics on major subgraphs only  
+- Improved relationship mapping logic  
+- Focused on major connected components  
+- Added influence scoring  
 
 ---
 
-## 5. LLM Explanatory Summaries
+## 5. MongoDB Bootstrap Database Script
 **Prompt:**  
-"Integrate the Groq API (llama-3.3-70b-versatile) to dynamically auto-generate brief, non-technical plain-language summaries of the given time-series graph queries."
+"Create a bootstrap database script that reads reddit JSONL data, cleans it, and uploads it to MongoDB Atlas. The application should fetch data from MongoDB instead of local files."
 
 **Fix / Action Taken:**  
-- Removed conversational filler from model outputs  
-- Hardened system prompt to enforce structured responses  
-- Added rate-limit fallback logic  
+- Created ingestion pipeline  
+- Added indexing  
+- Stored metadata and clustering info  
 
 ---
 
-## 6. Frontend Dashboard UI (React + Vite)
+## 6. Migration to Pinecone (Vector Optimization)
 **Prompt:**  
-"Scaffold an aesthetic React + Vite frontend dashboard using modern CSS. Produce a multi-column responsive layout showcasing a Time Series component, Semantic Search panel, and Topic Clustering scatter plot, consuming FastAPI endpoints."
+"Vector similarity search in MongoDB is slow. Migrate embeddings to Pinecone. Keep metadata in MongoDB but store embeddings in Pinecone and perform retrieval there."
 
 **Fix / Action Taken:**  
-- Fixed visual clutter and overlapping chart points  
-- Implemented dynamic bounding boxes  
-- Fixed backend CORS rules for Vite dev ports  
+- Removed embeddings from MongoDB  
+- Stored vector references  
+- Reduced latency significantly  
 
 ---
 
-## 7. Deployment Configuration
+## 7. Live Reddit Post Fetching
 **Prompt:**  
-"Configure a render.yaml file for hosting a FastAPI backend that statically serves a React frontend build. Ensure model downloads gracefully cache to prevent OOM errors."
+"Implement live reddit ingestion using subreddit.json endpoints. Fetch new posts periodically and update database and vector index."
 
 **Fix / Action Taken:**  
-- Removed redundant local caches via `.gitignore`  
-- Switched to start-time model fetching to comply with Render memory limits  
+- Implemented scheduler  
+- Prevented duplicates  
+- Periodic clustering updates  
 
 ---
 
-# Additional Development Prompts & Feature Improvements
-
-## 8. Dynamic Reddit API Ingestion & Database Decision
+## 8. Ranking Mode (Environment Variable)
 **Prompt:**  
-"I wish to turn this into a dynamic application which instead of ingesting static data, uses Reddit's free JSON API to routinely (every 10 minutes) grab posts from various subreddits. Do you think Atlas MongoDB will be ideal or the current local file access for embeddings is better? Note that the embeddings will have to re-computed routinely and the MiniLM transformer is slow."
+"Add an environment variable ranking_mode:
+- old: cosine similarity only  
+- new: hybrid ranking using similarity, recency, and engagement  
+Make it configurable without code changes."
+
+**Fix / Action Taken:**  
+- Added recency scoring  
+- Added engagement weighting  
+- Implemented hybrid ranking  
 
 ---
 
-## 9. UI Improvements
+## 9. LLM Explanatory Summaries
 **Prompt:**  
-"Few improvements to add:
-1. Autoscrolling in the chatbot  
-2. Make Search across workspace working and also in dark mode its text color is white which is fading into its textbox, fix that  
-3. Align the navbar width with the logo box on the left upper corner"
+"Integrate Groq API with Llama model to generate analytical summaries of results. Avoid conversational tone."
+
+**Fix / Action Taken:**  
+- Removed filler text  
+- Structured outputs  
+- Added rate-limit handling  
 
 ---
 
-## 10. RAG Chatbot Content Issue
+## 10. Frontend Dashboard UI (Roman Theme)
 **Prompt:**  
-"How does the current RAG chatbot work? Currently, it is showing no text content for a lot of the posts and it seems only titles are being read with the contents being YouTube/website links."
+"Improve the frontend UI with a Roman/classical theme using serif fonts, parchment colors, and structured layout."
+
+**Fix / Action Taken:**  
+- Improved layout  
+- Fixed overlapping charts  
+- Adjusted theme styling  
 
 ---
 
-## 11. Embedding Text Content Fix
+## 11. Deployment Configuration
 **Prompt:**  
-"Fixes to add:
-1. text_to_embed = f\"{title} {text[:500]}\" — keep the entire text content not just this. Make it fetch the complete post  
-2. For the retrieval make it dynamic RAG where you fetch all sources which are more similar than a threshold not just 4."
+"Configure deployment for FastAPI + React. Ensure models load efficiently and avoid memory issues."
+
+**Fix / Action Taken:**  
+- Removed unnecessary caches  
+- Optimized startup loading  
 
 ---
 
-## 12. Similarity Threshold Retrieval
+## 12. Retrieval Logic Improvements
 **Prompt:**  
-"Instead of top 20 make it that all sources above 0.5 similarity (add a variable similarity_threshold to config and use it) are used."
+"Modify RAG retrieval to use similarity threshold instead of top-k. Prioritize posts with text content."
 
 ---
 
-## 13. Source Display & Ranking Improvements
+## 13. Response Quality Improvements
 **Prompt:**  
-"Fixes:
-1. Despite fetching many sources its only displaying few on the side panel make it display all  
-2. Prioritize by first existence of text content and then by score."
+"Improve response depth while maintaining accuracy. Prefer text-based posts and ensure correct linking."
 
 ---
 
-## 14. Response Quality Improvements
+## 14. Markdown Rendering & Token Limits
 **Prompt:**  
-"Fixes:
-1. Prioritize posts with text content for framing the response  
-2. Increase the depth of the response BUT DO NOT SACRIFICE ACCURACY  
-3. If embedding a link without text content, link the reddit URL not the external one."
+"Fix markdown rendering issues and adjust token limits to prevent truncation."
 
 ---
 
-## 15. Markdown Rendering & Token Limits
+## 15. Performance & Latency Analysis
 **Prompt:**  
-"In the response it's not rendering markdown properly. Also the response is getting cut out and max tokens 800 leads to API response too large error."
-
----
-
-## 16. Retrieval Logic Change
-**Prompt:**  
-"Do not limit posts by highest similarity, limit them only by threshold exclusively."
-
----
-
-## 17. Text Content Prioritization Issue
-**Prompt:**  
-"The LLM response still links posts with no text content. Is it not prioritizing just those with text content?"
-
----
-
-## 18. Performance & Latency Analysis (No Code Changes)
-**Prompt:**  
-"Do not make any changes to the code. Tell me:
-1. Why clustering, embedding, networking is taking too long and if it's normal  
-2. Would using Redis help and if so how  
-3. How to reduce latency across the entire pipeline"
-
----
-
-## 19. Migration from MongoDB to Pinecone
-**Prompt:**  
-"I want to:
-1. Transition all embeddings from MongoDB to Pinecone  
-2. Remove all entries from MongoDB  
-3. Re-ingest data from cleaned_data.jsonl and new Reddit data without embeddings  
-4. Store embeddings strictly in Pinecone  
-5. Use hierarchical embeddings for better RAG performance"
-
----
-
-## 20. Clustering & Embedding Pipeline Changes
-**Prompt:**  
-"For clustering and embedding space:
-1. Change min and max clusters to 4 and 10  
-2. Precompute and store clusters in MongoDB and recompute on each ingestion  
-3. Change ingestion frequency to once an hour  
-4. Generate cluster summaries dynamically each time while displaying"
+"Analyze pipeline latency and suggest optimizations such as caching, batching, and Redis usage without changing core logic."
 
 ---
 
